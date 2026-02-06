@@ -1,0 +1,85 @@
+########################################
+# ========== .NET / Visual Studio ==========
+########################################
+
+# Build output
+**/[Bb]in/
+**/[Oo]bj/
+**/[Ll]og/
+
+# Test results
+**/TestResults/
+
+# Visual Studio
+.vs/
+**/*.user
+**/*.suo
+**/*.userosscache
+**/*.rsuser
+**/*.VC.db
+**/*.VC.VC.opendb
+
+# Rider / JetBrains
+.idea/
+**/*.sln.iml
+
+# VS Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/launch.json
+!.vscode/tasks.json
+!.vscode/extensions.json
+
+########################################
+# ========== ASP.NET Core ==========
+########################################
+
+# Environment settings (DO NOT COMMIT)
+**/appsettings.Development.json
+**/appsettings.Staging.json
+**/appsettings.Production.json
+
+# User Secrets
+**/secrets.json
+
+# Publish output
+**/publish/
+**/wwwroot/lib/
+
+########################################
+# ========== Frontend / JavaScript ==========
+########################################
+
+# Node.js
+**/node_modules/
+**/dist/
+**/build/
+**/.nuxt/
+**/.next/
+**/.output/
+**/.cache/
+
+# Logs
+**/npm-debug.log*
+**/yarn-debug.log*
+**/yarn-error.log*
+**/pnpm-debug.log*
+
+########################################
+# ========== Bundler / Minified ==========
+########################################
+
+**/*.min.js
+**/*.min.css
+**/*.map
+
+########################################
+# ========== OS / Misc ==========
+########################################
+
+.DS_Store
+Thumbs.db
+**/*.swp
+**/*.bak
+**/*.tmp
+**/*.temp
