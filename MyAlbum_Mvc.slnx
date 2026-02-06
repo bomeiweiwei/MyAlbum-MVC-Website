@@ -1,3 +1,11 @@
 <Solution>
+  <Folder Name="/ClassLibraries/">
+    <Project Path="MyAlbum.Application/MyAlbum.Application.csproj" />
+    <Project Path="MyAlbum.Domain/MyAlbum.Domain.csproj" />
+    <Project Path="MyAlbum.Infrastructure/MyAlbum.Infrastructure.csproj" />
+    <Project Path="MyAlbum.IoC/MyAlbum.IoC.csproj" />
+    <Project Path="MyAlbum.Models/MyAlbum.Models.csproj" />
+    <Project Path="MyAlbum.Shared/MyAlbum.Shared.csproj" />
+  </Folder>
   <Project Path="MyAlbum.Web/MyAlbum.Web.csproj" />
 </Solution>

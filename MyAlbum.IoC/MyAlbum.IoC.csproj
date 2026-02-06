@@ -1,0 +1,20 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Identity" Version="2.3.9" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MyAlbum.Application\MyAlbum.Application.csproj" />
+    <ProjectReference Include="..\MyAlbum.Infrastructure\MyAlbum.Infrastructure.csproj" />
+    <ProjectReference Include="..\MyAlbum.Models\MyAlbum.Models.csproj" />
+    <ProjectReference Include="..\MyAlbum.Shared\MyAlbum.Shared.csproj" />
+  </ItemGroup>
+
+</Project>
