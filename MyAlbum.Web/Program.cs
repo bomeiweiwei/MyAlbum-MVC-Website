@@ -1,7 +1,21 @@
+using MyAlbum.IoC;
+using MyAlbum.Models.Options;
+using System.Configuration;
+
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services
+    .AddOptions<ConnectionStringsOptions>()
+    .Bind(builder.Configuration.GetSection("ConnectionStrings"))
+    .Validate(o =>
+        !string.IsNullOrWhiteSpace(o.MasterConnection) &&
+        !string.IsNullOrWhiteSpace(o.SlaveConnection),
+        "ConnectionStrings is not configured properly");
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+
+builder.Services.RegisterService();
 
 var app = builder.Build();
 
