@@ -2,6 +2,8 @@ using MyAlbum.IoC;
 using MyAlbum.Models.Options;
 using MyAlbum.Shared.Enums;
 using MyAlbum.Shared.Extensions;
+using MyAlbum.Shared.Idenyity;
+using MyAlbum.Web.Identity;
 using System.Configuration;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -70,6 +72,9 @@ builder.Services.AddAuthorization(options =>
 });
 
 builder.Services.AddAntiforgery(o => o.HeaderName = "RequestVerificationToken");
+
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ICurrentUserAccessor, CurrentUserAccessor>();
 
 builder.Services.RegisterService();
 
