@@ -41,7 +41,7 @@ namespace MyAlbum.Repository.Business.EmployeeAccount
                 {
                     DateTime now = DateTime.UtcNow;
 
-                    var account = new Account
+                    var account = new Infrastructure.EF.Models.Account
                     {
                         AccountId = accountDto.AccountId,
                         UserName = accountDto.UserName,
@@ -55,7 +55,7 @@ namespace MyAlbum.Repository.Business.EmployeeAccount
                     };
                     await db.Accounts.AddAsync(account, ct);
 
-                    var employee = new Employee
+                    var employee = new Infrastructure.EF.Models.Employee
                     {
                         EmployeeId = employeeDto.EmployeeId,
                         AccountId = account.AccountId,

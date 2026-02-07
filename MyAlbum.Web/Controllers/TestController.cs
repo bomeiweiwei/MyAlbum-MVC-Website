@@ -15,17 +15,20 @@ namespace MyAlbum.Web.Controllers
         private readonly ITestService _testService;
         private readonly IEmployeeAccountCreateService _employeeAccountCreateService;
         private readonly IEmployeeAccountReadService _employeeAccountReadService;
+        private readonly IEmployeeAccountUpdateService _employeeAccountUpdateService;
         public TestController(
             IWebHostEnvironment env
             , ITestService testService
             , IEmployeeAccountCreateService employeeAccountCreateService
             , IEmployeeAccountReadService employeeAccountReadService
+            , IEmployeeAccountUpdateService employeeAccountUpdateService
             )
         {
             _env = env;
             _testService = testService;
             _employeeAccountCreateService = employeeAccountCreateService;
             _employeeAccountReadService = employeeAccountReadService;
+            _employeeAccountUpdateService = employeeAccountUpdateService;
         }
         /// <summary>
         /// 取得環境變數
@@ -81,6 +84,14 @@ namespace MyAlbum.Web.Controllers
         public async Task<ActionResult<List<EmployeeAccountDto>>> GetEmployeeAccountList([FromQuery] GetEmployeeAccountListReq req, CancellationToken ct = default)
         {
             var result = await _employeeAccountReadService.GetEmployeeAccountListAsync(req, ct);
+            return Ok(result);
+        }
+
+        [HttpPut("UpdateEmployeeAccount")]
+        [Authorize(AuthenticationSchemes = "AdminAuth")]
+        public async Task<ActionResult<bool>> UpdateEmployeeAccount([FromBody] UpdateEmployeeAccountReq req, CancellationToken ct = default)
+        {
+            var result = await _employeeAccountUpdateService.UpdateEmployeeAccountAsync(req, ct);
             return Ok(result);
         }
     }
