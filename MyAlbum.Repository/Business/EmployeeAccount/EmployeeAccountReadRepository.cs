@@ -40,5 +40,60 @@ namespace MyAlbum.Repository.Business.EmployeeAccount
 
             return result;
         }
+
+        public async Task<EmployeeAccountDto?> GetEmployeeAccountAsync(GetEmployeeAccountReq req, CancellationToken ct = default)
+        {
+            var result = new EmployeeAccountDto();
+            using var ctx = _factory.Create(ConnectionMode.Slave);
+            var db = ctx.AsDbContext<MyAlbumContext>();
+
+            var query = from emp in db.Employees.AsNoTracking()
+                        join account in db.Accounts.AsNoTracking() on emp.AccountId equals account.AccountId
+                        where
+                            account.AccountType == (int)AccountType.Admin
+                            && emp.EmployeeId == req.EmployeeId
+                            && account.AccountId == req.AccountId
+                        select new EmployeeAccountDto()
+                        {
+                            EmployeeId = emp.EmployeeId,
+                            AccountId = account.AccountId,
+                            UserName = account.UserName,
+                            Email = emp.Email,
+                            Phone = emp.Phone,
+                            Status = (Status)account.Status,
+                        };
+            result = await query.FirstOrDefaultAsync(ct);
+
+            return result;
+        }
+
+        public async Task<List<EmployeeAccountDto>> GetEmployeeAccountListAsync(GetEmployeeAccountListReq req, CancellationToken ct = default)
+        {
+            var result = new List<EmployeeAccountDto>();
+            using var ctx = _factory.Create(ConnectionMode.Slave);
+            var db = ctx.AsDbContext<MyAlbumContext>();
+
+            var query = from emp in db.Employees.AsNoTracking()
+                        join account in db.Accounts.AsNoTracking() on emp.AccountId equals account.AccountId
+                        where
+                            account.AccountType == (int)AccountType.Admin
+                        select new EmployeeAccountDto()
+                        {
+                            EmployeeId = emp.EmployeeId,
+                            AccountId = account.AccountId,
+                            UserName = account.UserName,
+                            Email = emp.Email,
+                            Phone = emp.Phone,
+                            Status = (Status)account.Status,
+                        };
+
+            if (!string.IsNullOrWhiteSpace(req.UserName))
+                query = query.Where(x => x.UserName.Contains(req.UserName));
+
+            result = await query.ToListAsync(ct);
+
+            return result;
+        }
+
     }
 }

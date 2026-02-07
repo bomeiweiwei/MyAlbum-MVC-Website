@@ -15,5 +15,9 @@ namespace MyAlbum.Domain.EmployeeAccount
         /// <param name="ct"></param>
         /// <returns></returns>
         Task<AccountDto?> GetEmployeeByUserNameAsync(GetEmpAccountDto dto, CancellationToken ct = default);
+
+        Task<EmployeeAccountDto?> GetEmployeeAccountAsync(GetEmployeeAccountReq req, CancellationToken ct = default);
+
+        Task<List<EmployeeAccountDto>> GetEmployeeAccountListAsync(GetEmployeeAccountListReq req, CancellationToken ct = default);
     }
 }
