@@ -1,15 +1,16 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using MyAlbum.Domain;
+using MyAlbum.Infrastructure;
 using MyAlbum.Infrastructure.EF.Data;
-using MyAlbum.Infrastructure.EF.Extensions;
 using MyAlbum.Models.Options;
+using MyAlbum.Repository.Extensions;
 using MyAlbum.Shared.Enums;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace MyAlbum.Infrastructure
+namespace MyAlbum.Repository
 {
     public sealed class AlbumDbContextFactory : IAlbumDbContextFactory
     {

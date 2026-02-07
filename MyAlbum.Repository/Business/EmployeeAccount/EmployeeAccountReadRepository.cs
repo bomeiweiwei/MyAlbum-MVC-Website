@@ -9,7 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace MyAlbum.Infrastructure.Repositories.EmployeeAccount
+namespace MyAlbum.Repository.Business.EmployeeAccount
 {
     public class EmployeeAccountReadRepository : IEmployeeAccountReadRepository
     {
@@ -24,8 +24,8 @@ namespace MyAlbum.Infrastructure.Repositories.EmployeeAccount
 
             var query = from emp in db.Employees.AsNoTracking()
                         join account in db.Accounts.AsNoTracking() on emp.AccountId equals account.AccountId
-                        where 
-                            account.AccountType == (int)AccountType.Admin 
+                        where
+                            account.AccountType == (int)AccountType.Admin
                             && account.Status == (int)dto.AccountStatus
                             && emp.Status == (int)dto.EmpStatus
                             && account.UserName == dto.UserName

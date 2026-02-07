@@ -12,8 +12,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\MyAlbum.Application\MyAlbum.Application.csproj" />
-    <ProjectReference Include="..\MyAlbum.Infrastructure\MyAlbum.Infrastructure.csproj" />
     <ProjectReference Include="..\MyAlbum.Models\MyAlbum.Models.csproj" />
+    <ProjectReference Include="..\MyAlbum.Repository\MyAlbum.Repository.csproj" />
     <ProjectReference Include="..\MyAlbum.Shared\MyAlbum.Shared.csproj" />
   </ItemGroup>
 

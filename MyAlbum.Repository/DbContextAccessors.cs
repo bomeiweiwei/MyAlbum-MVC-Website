@@ -1,10 +1,11 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using MyAlbum.Domain;
+using MyAlbum.Infrastructure;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace MyAlbum.Infrastructure
+namespace MyAlbum.Repository
 {
     internal static class DbContextAccessors
     {

@@ -9,7 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace MyAlbum.Infrastructure.Repositories.MemberAccount
+namespace MyAlbum.Repository.Business.MemberAccount
 {
     public class MemberAccountReadRepository : IMemberAccountReadRepository
     {

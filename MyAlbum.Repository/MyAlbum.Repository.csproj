@@ -15,7 +15,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="sql\" />
+    <ProjectReference Include="..\MyAlbum.Domain\MyAlbum.Domain.csproj" />
+    <ProjectReference Include="..\MyAlbum.Infrastructure\MyAlbum.Infrastructure.csproj" />
+    <ProjectReference Include="..\MyAlbum.Models\MyAlbum.Models.csproj" />
+    <ProjectReference Include="..\MyAlbum.Shared\MyAlbum.Shared.csproj" />
   </ItemGroup>
 
 </Project>

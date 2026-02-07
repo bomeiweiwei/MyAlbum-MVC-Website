@@ -6,7 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace MyAlbum.Infrastructure
+namespace MyAlbum.Repository
 {
     sealed class EfTransaction : ITransaction
     {

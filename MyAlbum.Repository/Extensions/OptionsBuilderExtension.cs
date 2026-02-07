@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace MyAlbum.Infrastructure.EF.Extensions
+namespace MyAlbum.Repository.Extensions
 {
     public static class OptionsBuilderExtension
     {

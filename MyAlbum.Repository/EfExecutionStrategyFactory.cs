@@ -5,7 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace MyAlbum.Infrastructure
+namespace MyAlbum.Repository
 {
     public sealed class EfExecutionStrategyFactory : IExecutionStrategyFactory
     {
