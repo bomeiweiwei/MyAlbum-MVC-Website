@@ -51,7 +51,7 @@ namespace MyAlbum.Application.EmployeeAccount.implement
 
             AccountUpdateDto accountDto = new AccountUpdateDto
             {
-                AccountId = id,
+                AccountId = req.AccountId,
                 PasswordHash = passwordHash,
                 Status = req.AccountStatus,
                 UpdateBy = id
