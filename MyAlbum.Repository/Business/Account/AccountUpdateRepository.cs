@@ -20,7 +20,7 @@ namespace MyAlbum.Repository.Business.Account
 
             var db = ctx.AsDbContext<MyAlbumContext>();
             var data = await db.Accounts.Where(x => x.AccountId == accountDto.AccountId).FirstOrDefaultAsync(ct);
-            if (data == null) 
+            if (data == null)
                 return result;
 
             if (!string.IsNullOrWhiteSpace(accountDto.PasswordHash))
@@ -32,7 +32,25 @@ namespace MyAlbum.Repository.Business.Account
             data.UpdatedBy = accountDto.UpdateBy;
             data.UpdatedAtUtc = DateTime.UtcNow;
             int check = await ctx.SaveChangesAsync(ct);
-            if(check==1)
+            if (check == 1)
+                result = true;
+            return result;
+        }
+
+        public async Task<bool> UpdateAccountActiveAsync(IAlbumDbContext ctx, AccountUpdateDto accountDto, CancellationToken ct = default)
+        {
+            var result = false;
+
+            var db = ctx.AsDbContext<MyAlbumContext>();
+            var data = await db.Accounts.Where(x => x.AccountId == accountDto.AccountId).FirstOrDefaultAsync(ct);
+            if (data == null)
+                return result;
+
+            data.Status = (byte)accountDto.Status;
+            data.UpdatedBy = accountDto.UpdateBy;
+            data.UpdatedAtUtc = DateTime.UtcNow;
+            int check = await ctx.SaveChangesAsync(ct);
+            if (check == 1)
                 result = true;
             return result;
         }

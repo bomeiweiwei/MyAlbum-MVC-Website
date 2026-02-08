@@ -9,5 +9,7 @@ namespace MyAlbum.Domain.Employee
     public interface IEmployeeUpdateRepository
     {
         Task<bool> UpdateEmployeeAsync(IAlbumDbContext ctx, EmployeeUpdateDto employeeDto, CancellationToken ct = default);
+
+        Task<bool> UpdateEmployeeActiveAsync(IAlbumDbContext ctx, EmployeeUpdateDto employeeDto, CancellationToken ct = default);
     }
 }

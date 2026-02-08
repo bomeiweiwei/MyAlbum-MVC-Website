@@ -9,5 +9,7 @@ namespace MyAlbum.Domain.Account
     public interface IAccountUpdateRepository
     {
         Task<bool> UpdateAccountAsync(IAlbumDbContext ctx, AccountUpdateDto accountDto, CancellationToken ct = default);
+
+        Task<bool> UpdateAccountActiveAsync(IAlbumDbContext ctx, AccountUpdateDto accountDto, CancellationToken ct = default);
     }
 }

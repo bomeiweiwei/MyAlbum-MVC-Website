@@ -97,7 +97,49 @@ namespace MyAlbum.Application.EmployeeAccount.implement
 
         public async Task<bool> UpdateEmployeeAccountActiveeAsync(UpdateEmployeeAccountActiveReq req, CancellationToken ct = default)
         {
-            throw new NotImplementedException();
+            var result = false;
+            var id = _currentUser.GetRequiredAccountId();
+            AccountUpdateDto accountDto = new AccountUpdateDto
+            {
+                AccountId = req.AccountId,
+                Status = req.AccountStatus,
+                UpdateBy = id
+            };
+
+            EmployeeUpdateDto employeeDto = new EmployeeUpdateDto
+            {
+                EmployeeId = req.EmployeeId,
+                AccountId = req.AccountId,
+                Status = req.EmployeeStatus,
+                UpdateBy = id
+            };
+
+            using var ctx = MainDB(ConnectionMode.Master);
+            var strategy = _strategyFactory.Create(ctx);
+
+            await strategy.ExecuteAsync(async () =>
+            {
+                await using var tx = await ctx.BeginTransactionAsync(ct);
+
+                try
+                {
+                    var accountResult = await _accountUpdateRepository.UpdateAccountAsync(ctx, accountDto, ct);
+                    var employeeResult = await _employeeUpdateRepository.UpdateEmployeeAsync(ctx, employeeDto, ct);
+
+                    result = accountResult && employeeResult;
+                    if (result)
+                        await tx.CommitAsync(ct);
+                    else
+                        await tx.RollbackAsync(ct);
+                }
+                catch
+                {
+                    await tx.RollbackAsync(ct);
+                    throw;
+                }
+            }, ct);
+
+            return result;
         }
     }
 }

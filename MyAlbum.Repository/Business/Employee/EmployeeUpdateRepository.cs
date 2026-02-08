@@ -34,5 +34,23 @@ namespace MyAlbum.Repository.Business.Employee
                 result = true;
             return result;
         }
+
+        public async Task<bool> UpdateEmployeeActiveAsync(IAlbumDbContext ctx, EmployeeUpdateDto employeeDto, CancellationToken ct = default)
+        {
+            var result = false;
+
+            var db = ctx.AsDbContext<MyAlbumContext>();
+            var data = await db.Employees.Where(x => x.EmployeeId == employeeDto.EmployeeId && x.AccountId == employeeDto.AccountId).FirstOrDefaultAsync(ct);
+            if (data == null)
+                return result;
+
+            data.Status = (byte)employeeDto.Status;
+            data.UpdatedBy = employeeDto.UpdateBy;
+            data.UpdatedAtUtc = DateTime.UtcNow;
+            int check = await ctx.SaveChangesAsync(ct);
+            if (check == 1)
+                result = true;
+            return result;
+        }
     }
 }
