@@ -1,8 +1,11 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.CodeAnalysis.Editing;
 using MyAlbum.Application.EmployeeAccount;
+using MyAlbum.Application.Member;
 using MyAlbum.Application.Test;
+using MyAlbum.Infrastructure.EF.Models;
 using MyAlbum.Models.EmployeeAccount;
 
 namespace MyAlbum.Web.Controllers
@@ -16,12 +19,14 @@ namespace MyAlbum.Web.Controllers
         private readonly IEmployeeAccountCreateService _employeeAccountCreateService;
         private readonly IEmployeeAccountReadService _employeeAccountReadService;
         private readonly IEmployeeAccountUpdateService _employeeAccountUpdateService;
+        private readonly IMemberDataUploadService _memberDataUploadService;
         public TestController(
             IWebHostEnvironment env
             , ITestService testService
             , IEmployeeAccountCreateService employeeAccountCreateService
             , IEmployeeAccountReadService employeeAccountReadService
             , IEmployeeAccountUpdateService employeeAccountUpdateService
+            , IMemberDataUploadService memberDataUploadService
             )
         {
             _env = env;
@@ -29,6 +34,7 @@ namespace MyAlbum.Web.Controllers
             _employeeAccountCreateService = employeeAccountCreateService;
             _employeeAccountReadService = employeeAccountReadService;
             _employeeAccountUpdateService = employeeAccountUpdateService;
+            _memberDataUploadService = memberDataUploadService;
         }
         /// <summary>
         /// 取得環境變數
@@ -92,6 +98,17 @@ namespace MyAlbum.Web.Controllers
         public async Task<ActionResult<bool>> UpdateEmployeeAccount([FromBody] UpdateEmployeeAccountReq req, CancellationToken ct = default)
         {
             var result = await _employeeAccountUpdateService.UpdateEmployeeAccountAsync(req, ct);
+            return Ok(result);
+        }
+
+        [HttpPost("UploadAvatar")]
+        [Authorize(AuthenticationSchemes = "MemberAuth")]
+        public async Task<IActionResult> UploadAvatar([FromForm] Guid memberId, [FromForm] IFormFile avatar, CancellationToken ct)
+        {
+            if (avatar == null || avatar.Length == 0) return BadRequest("No file");
+            await using var stream = avatar.OpenReadStream();
+            var result = await _memberDataUploadService.UploadAvatarAsync(memberId, stream, avatar.FileName, ct);
+
             return Ok(result);
         }
     }

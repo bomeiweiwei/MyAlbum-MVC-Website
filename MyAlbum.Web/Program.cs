@@ -1,3 +1,4 @@
+using Microsoft.Extensions.FileProviders;
 using MyAlbum.IoC;
 using MyAlbum.Models.Options;
 using MyAlbum.Shared.Enums;
@@ -15,6 +16,8 @@ builder.Services
         !string.IsNullOrWhiteSpace(o.MasterConnection) &&
         !string.IsNullOrWhiteSpace(o.SlaveConnection),
         "ConnectionStrings is not configured properly");
+
+builder.Services.Configure<UploadOptions>(builder.Configuration.GetSection("Upload"));
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
@@ -89,6 +92,19 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseStaticFiles();
+var uploadRoot = builder.Configuration["Upload:RootPath"];
+if (!string.IsNullOrWhiteSpace(uploadRoot))
+{
+    Directory.CreateDirectory(uploadRoot);
+    app.UseStaticFiles(new StaticFileOptions
+    {
+        FileProvider = new PhysicalFileProvider(uploadRoot),
+        RequestPath = "/uploads"
+    });
+}
+
 app.UseRouting();
 
 app.UseAuthentication();
