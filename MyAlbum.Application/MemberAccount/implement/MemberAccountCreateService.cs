@@ -1,37 +1,37 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using MyAlbum.Domain;
 using MyAlbum.Domain.EmployeeAccount;
+using MyAlbum.Domain.MemberAccount;
 using MyAlbum.Models.Account;
 using MyAlbum.Models.Employee;
-using MyAlbum.Models.EmployeeAccount;
 using MyAlbum.Models.Identity;
+using MyAlbum.Models.Member;
+using MyAlbum.Models.MemberAccount;
 using MyAlbum.Shared.Extensions;
 using MyAlbum.Shared.Idenyity;
 using System;
 using System.Collections.Generic;
-using System.Security.Principal;
 using System.Text;
-using System.Threading;
 
-namespace MyAlbum.Application.EmployeeAccount.implement
+namespace MyAlbum.Application.MemberAccount.implement
 {
-    public class EmployeeAccountCreateService : BaseService, IEmployeeAccountCreateService
+    public class MemberAccountCreateService : BaseService, IMemberAccountCreateService
     {
         private readonly IPasswordHasher<AccountDto> _hasher;
         private readonly ICurrentUserAccessor _currentUser;
-        private readonly IEmployeeAccountCreateRepository _employeeAccountCreateRepository;
-        public EmployeeAccountCreateService(
+        private readonly IMemberAccountCreateRepository _memberAccountCreateRepository;
+        public MemberAccountCreateService(
            IAlbumDbContextFactory factory,
            IPasswordHasher<AccountDto> hasher,
            ICurrentUserAccessor currentUser,
-           IEmployeeAccountCreateRepository employeeAccountCreateRepository) : base(factory)
+           IMemberAccountCreateRepository memberAccountCreateRepository) : base(factory)
         {
             _hasher = hasher;
             _currentUser = currentUser;
-            _employeeAccountCreateRepository = employeeAccountCreateRepository;
+            _memberAccountCreateRepository = memberAccountCreateRepository;
         }
 
-        public async Task<Guid> CreateEmployeeWithAccount(CreateEmployeeReq req, CancellationToken ct = default)
+        public async Task<Guid> CreateMemberWithAccountAsync(CreateMemberReq req, CancellationToken ct = default)
         {
             var operatorId = _currentUser.GetRequiredAccountId();
             var passwordHash = _hasher.HashPassword(null!, req.Password);
@@ -43,16 +43,16 @@ namespace MyAlbum.Application.EmployeeAccount.implement
                 PasswordHash = passwordHash,
                 CreatedBy = operatorId
             };
-            EmployeeCreateDto employeeCreateDto = new EmployeeCreateDto
+            MemberCreateDto memberCreateDto = new MemberCreateDto
             {
-                EmployeeId = Guid.NewGuid(),
+                MemberId = Guid.NewGuid(),
                 AccountId = accountCreateDto.AccountId,
                 Email = req.Email,
-                Phone = req.Phone,
+                DisplayName = req.DisplayName,
                 CreatedBy = operatorId
             };
 
-            return await _employeeAccountCreateRepository.CreateEmployeeWithAccountAsync(accountCreateDto, employeeCreateDto, ct);
+            return await _memberAccountCreateRepository.CreateMemberWithAccountAsync(accountCreateDto, memberCreateDto, ct);
         }
     }
 }

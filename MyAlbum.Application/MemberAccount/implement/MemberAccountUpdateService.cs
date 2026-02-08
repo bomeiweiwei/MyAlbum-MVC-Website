@@ -3,10 +3,12 @@ using MyAlbum.Domain;
 using MyAlbum.Domain.Account;
 using MyAlbum.Domain.Employee;
 using MyAlbum.Domain.EmployeeAccount;
+using MyAlbum.Domain.Member;
 using MyAlbum.Models.Account;
 using MyAlbum.Models.Employee;
-using MyAlbum.Models.EmployeeAccount;
 using MyAlbum.Models.Identity;
+using MyAlbum.Models.Member;
+using MyAlbum.Models.MemberAccount;
 using MyAlbum.Shared.Enums;
 using MyAlbum.Shared.Extensions;
 using MyAlbum.Shared.Idenyity;
@@ -14,32 +16,32 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace MyAlbum.Application.EmployeeAccount.implement
+namespace MyAlbum.Application.MemberAccount.implement
 {
-    public class EmployeeAccountUpdateService : BaseService, IEmployeeAccountUpdateService
+    public class MemberAccountUpdateService : BaseService, IMemberAccountUpdateService
     {
         private readonly IExecutionStrategyFactory _strategyFactory;
         private readonly IPasswordHasher<AccountDto> _hasher;
         private readonly ICurrentUserAccessor _currentUser;
         private readonly IAccountUpdateRepository _accountUpdateRepository;
-        private readonly IEmployeeUpdateRepository _employeeUpdateRepository;
-        public EmployeeAccountUpdateService(
+        private readonly IMemberUpdateRepository _memberUpdateRepository;
+        public MemberAccountUpdateService(
            IAlbumDbContextFactory factory,
            IExecutionStrategyFactory strategyFactory,
            IPasswordHasher<AccountDto> hasher,
            ICurrentUserAccessor currentUser,
            IEmployeeAccountCreateRepository employeeAccountCreateRepository,
            IAccountUpdateRepository accountUpdateRepository,
-           IEmployeeUpdateRepository employeeUpdateRepository) : base(factory)
+           IMemberUpdateRepository memberUpdateRepository) : base(factory)
         {
             _strategyFactory = strategyFactory;
             _hasher = hasher;
             _currentUser = currentUser;
             _accountUpdateRepository = accountUpdateRepository;
-            _employeeUpdateRepository = employeeUpdateRepository;
+            _memberUpdateRepository = memberUpdateRepository;
         }
 
-        public async Task<bool> UpdateEmployeeAccountAsync(UpdateEmployeeAccountReq req, CancellationToken ct = default)
+        public async Task<bool> UpdateMemberAccountAsync(UpdateMemberAccountReq req, CancellationToken ct = default)
         {
             var result = false;
             var operatorId = _currentUser.GetRequiredAccountId();
@@ -57,13 +59,13 @@ namespace MyAlbum.Application.EmployeeAccount.implement
                 UpdateBy = operatorId
             };
 
-            EmployeeUpdateDto employeeDto = new EmployeeUpdateDto
+            MemberUpdateDto employeeDto = new MemberUpdateDto
             {
-                EmployeeId = req.EmployeeId,
+                MemberId = req.MemberId,
                 AccountId = req.AccountId,
                 Email = req.Email,
-                Phone = req.Phone,
-                Status = req.EmployeeStatus,
+                DisplayName = req.DisplayName,
+                Status = req.MemberStatus,
                 UpdateBy = operatorId
             };
 
@@ -77,9 +79,9 @@ namespace MyAlbum.Application.EmployeeAccount.implement
                 try
                 {
                     var accountResult = await _accountUpdateRepository.UpdateAccountAsync(ctx, accountDto, ct);
-                    var employeeResult = await _employeeUpdateRepository.UpdateEmployeeAsync(ctx, employeeDto, ct);
+                    var memberResult = await _memberUpdateRepository.UpdateMemberAsync(ctx, employeeDto, ct);
 
-                    result = accountResult && employeeResult;
+                    result = accountResult && memberResult;
                     if (result)
                         await tx.CommitAsync(ct);
                     else
@@ -95,7 +97,7 @@ namespace MyAlbum.Application.EmployeeAccount.implement
             return result;
         }
 
-        public async Task<bool> UpdateEmployeeAccountActiveAsync(UpdateEmployeeAccountActiveReq req, CancellationToken ct = default)
+        public async Task<bool> UpdateMemberAccountActiveAsync(UpdateMemberAccountActiveReq req, CancellationToken ct = default)
         {
             var result = false;
             var operatorId = _currentUser.GetRequiredAccountId();
@@ -106,11 +108,11 @@ namespace MyAlbum.Application.EmployeeAccount.implement
                 UpdateBy = operatorId
             };
 
-            EmployeeUpdateDto employeeDto = new EmployeeUpdateDto
+            MemberUpdateDto employeeDto = new MemberUpdateDto
             {
-                EmployeeId = req.EmployeeId,
+                MemberId = req.MemberId,
                 AccountId = req.AccountId,
-                Status = req.EmployeeStatus,
+                Status = req.MemberStatus,
                 UpdateBy = operatorId
             };
 
@@ -124,9 +126,9 @@ namespace MyAlbum.Application.EmployeeAccount.implement
                 try
                 {
                     var accountResult = await _accountUpdateRepository.UpdateAccountAsync(ctx, accountDto, ct);
-                    var employeeResult = await _employeeUpdateRepository.UpdateEmployeeAsync(ctx, employeeDto, ct);
+                    var memberResult = await _memberUpdateRepository.UpdateMemberAsync(ctx, employeeDto, ct);
 
-                    result = accountResult && employeeResult;
+                    result = accountResult && memberResult;
                     if (result)
                         await tx.CommitAsync(ct);
                     else
@@ -141,5 +143,7 @@ namespace MyAlbum.Application.EmployeeAccount.implement
 
             return result;
         }
+
+        
     }
 }

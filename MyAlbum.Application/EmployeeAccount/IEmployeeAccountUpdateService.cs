@@ -9,6 +9,6 @@ namespace MyAlbum.Application.EmployeeAccount
     {
         Task<bool> UpdateEmployeeAccountAsync(UpdateEmployeeAccountReq req, CancellationToken ct = default);
 
-        Task<bool> UpdateEmployeeAccountActiveeAsync(UpdateEmployeeAccountActiveReq req, CancellationToken ct = default);
+        Task<bool> UpdateEmployeeAccountActiveAsync(UpdateEmployeeAccountActiveReq req, CancellationToken ct = default);
     }
 }

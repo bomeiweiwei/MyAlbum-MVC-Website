@@ -10,8 +10,4 @@
     <ProjectReference Include="..\MyAlbum.Shared\MyAlbum.Shared.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Member\" />
-  </ItemGroup>
-
 </Project>
