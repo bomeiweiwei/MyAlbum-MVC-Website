@@ -28,7 +28,7 @@ namespace MyAlbum.Application.Member.implement
 
         public async Task<string> UploadAvatarAsync(Guid memberId, Stream fileStream, string originalFileName, CancellationToken ct)
         {
-            var id = _currentUser.GetRequiredAccountId();
+            var operatorId = _currentUser.GetRequiredAccountId();
             var fileKey = _paths.BuildMemberAvatarFileKey(memberId, originalFileName);
 
             var physicalPath = _paths.ToPhysicalPath(fileKey);
@@ -41,7 +41,7 @@ namespace MyAlbum.Application.Member.implement
                     await fileStream.CopyToAsync(outStream, ct);
                 }
 
-                await _memberUpdateRepository.UpdateMemberAvatarPathAsync(memberId, fileKey, id, ct);
+                await _memberUpdateRepository.UpdateMemberAvatarPathAsync(memberId, fileKey, operatorId, ct);
 
                 return _paths.ToPublicUrl(fileKey);
             }
