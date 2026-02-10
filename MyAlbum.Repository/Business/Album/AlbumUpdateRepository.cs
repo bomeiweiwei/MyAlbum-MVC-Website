@@ -36,7 +36,7 @@ namespace MyAlbum.Repository.Business.Album
                     data.Description = dto.Description;
                     data.CoverPath = dto.CoverPath;
                     data.Status = (byte)dto.Status;
-                    data.UpdatedBy = dto.UpdateddBy;
+                    data.UpdatedBy = dto.UpdatedBy;
                     data.UpdatedAtUtc = dto.UpdatedAtUtc;
 
                     await db.SaveChangesAsync(ct);
@@ -73,6 +73,7 @@ namespace MyAlbum.Repository.Business.Album
                 try
                 {
                     data.Status = (byte)dto.Status;
+                    data.UpdatedAtUtc = dto.UpdatedAtUtc;
 
                     await db.SaveChangesAsync(ct);
 

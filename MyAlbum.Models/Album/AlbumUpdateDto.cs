@@ -19,7 +19,7 @@ namespace MyAlbum.Models.Album
         public string? Description { get; set; }
         public string? CoverPath { get; set; }
         public Status Status { get; set; }
-        public Guid UpdateddBy { get; set; }
+        public Guid UpdatedBy { get; set; }
         public DateTime UpdatedAtUtc { get; set; } = DateTime.UtcNow;
         #endregion
     }

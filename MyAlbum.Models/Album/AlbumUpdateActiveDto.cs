@@ -16,5 +16,6 @@ namespace MyAlbum.Models.Album
 
         public Status Status { get; set; }
         public Guid UpdateBy { get; set; }
+        public DateTime UpdatedAtUtc { get; set; } = DateTime.UtcNow;
     }
 }

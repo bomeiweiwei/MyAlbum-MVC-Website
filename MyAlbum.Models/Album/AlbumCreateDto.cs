@@ -7,7 +7,7 @@ namespace MyAlbum.Models.Album
 {
     public class AlbumCreateDto
     {
-        public Guid AlbumId { get; set; }
+        public Guid AlbumId { get; set; } = Guid.NewGuid();
         public Guid AlbumCategoryId { get; set; }
         public Guid OwnerAccountId { get; set; }
         public string Title { get; set; } = null!;
