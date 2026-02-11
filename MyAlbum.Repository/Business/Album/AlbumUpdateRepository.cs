@@ -1,0 +1,94 @@
+﻿using Microsoft.EntityFrameworkCore;
+using MyAlbum.Domain;
+using MyAlbum.Domain.Album;
+using MyAlbum.Infrastructure.EF.Data;
+using MyAlbum.Models.Album;
+using MyAlbum.Shared.Enums;
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace MyAlbum.Repository.Business.Album
+{
+    public class AlbumUpdateRepository : IAlbumUpdateRepository
+    {
+        private readonly IAlbumDbContextFactory _factory;
+        public AlbumUpdateRepository(IAlbumDbContextFactory factory) => _factory = factory;
+
+        public async Task<bool> UpdateAlbumAsync(AlbumUpdateDto dto, CancellationToken ct = default)
+        {
+            bool result = false;
+
+            using var ctx = _factory.Create(ConnectionMode.Master);
+            var db = ctx.AsDbContext<MyAlbumContext>();
+            var strategy = db.Database.CreateExecutionStrategy();
+
+            var data = await db.Albums.FirstOrDefaultAsync(m => m.AlbumId == dto.AlbumId && m.AlbumCategoryId == dto.AlbumCategoryId);
+            if (data == null)
+                throw new InvalidOperationException("找不到指定的資料。");
+
+            await strategy.ExecuteAsync(async () =>
+            {
+                await using var tx = await db.Database.BeginTransactionAsync(ct);
+                try
+                {
+                    data.Title = dto.Title;
+                    data.Description = dto.Description;
+                    data.CoverPath = dto.CoverPath;
+                    data.Status = (byte)dto.Status;
+                    data.UpdatedBy = dto.UpdatedBy;
+                    data.UpdatedAtUtc = dto.UpdatedAtUtc;
+
+                    await db.SaveChangesAsync(ct);
+
+                    await tx.CommitAsync(ct);
+
+                    result = true;
+                }
+                catch
+                {
+                    await tx.RollbackAsync(ct);
+                    throw;
+                }
+            });
+
+            return result;
+        }
+
+        public async Task<bool> UpdateAlbumActiveAsync(AlbumUpdateActiveDto dto, CancellationToken ct = default)
+        {
+            bool result = false;
+
+            using var ctx = _factory.Create(ConnectionMode.Master);
+            var db = ctx.AsDbContext<MyAlbumContext>();
+            var strategy = db.Database.CreateExecutionStrategy();
+
+            var data = await db.Albums.FirstOrDefaultAsync(m => m.AlbumId == dto.AlbumId && m.AlbumCategoryId == dto.AlbumCategoryId);
+            if (data == null)
+                throw new InvalidOperationException("找不到指定的資料。");
+
+            await strategy.ExecuteAsync(async () =>
+            {
+                await using var tx = await db.Database.BeginTransactionAsync(ct);
+                try
+                {
+                    data.Status = (byte)dto.Status;
+                    data.UpdatedAtUtc = dto.UpdatedAtUtc;
+
+                    await db.SaveChangesAsync(ct);
+
+                    await tx.CommitAsync(ct);
+
+                    result = true;
+                }
+                catch
+                {
+                    await tx.RollbackAsync(ct);
+                    throw;
+                }
+            });
+
+            return result;
+        }
+    }
+}
