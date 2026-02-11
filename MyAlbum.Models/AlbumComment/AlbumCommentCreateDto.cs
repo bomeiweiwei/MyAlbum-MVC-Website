@@ -7,7 +7,7 @@ namespace MyAlbum.Models.AlbumComment
 {
     public class AlbumCommentCreateDto
     {
-        public Guid AlbumCommentId { get; set; }
+        public Guid AlbumCommentId { get; set; } = Guid.NewGuid();
 
         public Guid AlbumPhotoId { get; set; }
 
