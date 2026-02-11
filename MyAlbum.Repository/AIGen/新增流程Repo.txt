@@ -1,0 +1,90 @@
+0. 資料庫的表格名稱：AlbumComment
+1. 類別名稱：AlbumComment
+2. 類別屬性：
+    public Guid AlbumCommentId { get; set; }
+
+    public Guid AlbumPhotoId { get; set; }
+
+    public Guid MemberId { get; set; }
+
+    public string Comment { get; set; } = null!;
+
+    public DateTime ReleaseTimeUtc { get; set; }
+
+    public bool IsChanged { get; set; }
+
+    public byte Status { get; set; }
+
+    public DateTime CreatedAtUtc { get; set; }
+
+    public DateTime UpdatedAtUtc { get; set; }
+
+    public Guid CreatedBy { get; set; }
+
+    public Guid UpdatedBy { get; set; }
+
+3. 資料庫的表格的PK：AlbumCommentId
+	
+4. 請設計一個跟新增相關的介面的Repository，名稱是：I<<類別名稱>>CreateRepository
+5. 介面的Repository一定有1個方法，設定為：
+5-1. 方法一定會帶：
+5-1-1. Dto類別：
+5-1-1-1. 名稱：<<類別名稱>>CreateDto
+5-1-1-2. 屬性：除了類別屬性的：UpdatedAtUtc、UpdatedBy，全都加到<<類別名稱>>CreateDto裡，當屬性名稱等於PK則預設Guid.NewGuid();
+5-1-1-3. 指定的日期欄位：CreatedAtUtc
+5-1-1-4. 如果指定的日期欄位有設定則給預設值：DateTime.UtcNow
+5-1-1-5. 遇到 Status關鍵字 請設定為：public Status Status { get; set; } = Status.Active;，它在系統裡是Enum
+5-1-2. CancellationToken ct = default
+
+5-2. 方法名稱：Create<<類別名稱>>Async
+
+5-4. 方法預設會回傳新增資料的PK
+
+6. 請設計一個類別實作介面的Repository，名稱是：<<類別名稱>>CreateRepository
+6-1. 假設類別名稱是：Sample，此 SampleCreateRepository 初始建構子一律照以下模式做注入設定：
+private readonly IAlbumDbContextFactory _factory;
+public SampleCreateRepository(IAlbumDbContextFactory factory) => _factory = factory;
+
+6-2. 方法一律public async
+
+6-3. 方法初始一律照以下模式設定：
+6-3-1. 設定result：
+Guid result = Guid.Empty;
+6-3-2. 設定交易區塊：
+using var ctx = _factory.Create(ConnectionMode.Master);
+var db = ctx.AsDbContext<MyAlbumContext>();
+var strategy = db.Database.CreateExecutionStrategy();
+
+await strategy.ExecuteAsync(async () =>
+{
+    await using var tx = await db.Database.BeginTransactionAsync(ct);
+    try
+    {
+        /* 設定資料區塊 */
+		
+        await db.SaveChangesAsync(ct);
+
+        await tx.CommitAsync(ct);
+
+        result = data.<<資料庫的表格的PK>>;
+    }
+    catch
+    {
+        await tx.RollbackAsync(ct);
+        throw;
+    }
+});
+6-3-3. 在上述設定資料區塊設定要新增的資料，例：
+ var data = new Infrastructure.EF.Models.<<資料庫的表格名稱>>
+ {
+     <<類別屬性>> = dto.屬性,
+     Status = (int)Status.Active,
+     CreatedAtUtc = dto.CreatedAtUtc,
+     CreatedBy = dto.CreatedBy,
+     UpdatedAtUtc = dto.CreatedAtUtc,
+     UpdatedBy = dto.CreatedBy
+ };
+ await db.<<資料庫的表格名稱>>s.AddAsync(data, ct);
+ 
+6-4. 交易區塊 後回傳result：
+ return result;
