@@ -62,7 +62,7 @@ namespace MyAlbum.Repository.Business.Category
 
             if (!string.IsNullOrEmpty(req.CategoryName))
             {
-                query = query.Where(x => x.CategoryName == req.CategoryName);
+                query = query.Where(x => x.CategoryName.Contains(req.CategoryName));
             }
 
             result = await query.ToListAsync(ct);
