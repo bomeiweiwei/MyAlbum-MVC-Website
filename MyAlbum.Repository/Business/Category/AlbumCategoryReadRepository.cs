@@ -24,8 +24,7 @@ namespace MyAlbum.Repository.Business.Category
 
             var query = from cat in db.AlbumCategories.AsNoTracking()
                         where
-                            cat.AlbumCategoryId == req.AlbumCategoryId &&
-                            cat.Status == (int)Status.Active
+                            cat.AlbumCategoryId == req.AlbumCategoryId
                         select new AlbumCategoryDto()
                         {
                             AlbumCategoryId = cat.AlbumCategoryId,
@@ -50,8 +49,7 @@ namespace MyAlbum.Repository.Business.Category
             var db = ctx.AsDbContext<MyAlbumContext>();
 
             var query = from cat in db.AlbumCategories.AsNoTracking()
-                        where
-                            cat.Status == (int)Status.Active
+                        orderby cat.SortOrder
                         select new AlbumCategoryDto()
                         {
                             AlbumCategoryId = cat.AlbumCategoryId,
@@ -63,6 +61,10 @@ namespace MyAlbum.Repository.Business.Category
             if (!string.IsNullOrEmpty(req.CategoryName))
             {
                 query = query.Where(x => x.CategoryName.Contains(req.CategoryName));
+            }
+            if (req.Status.HasValue)
+            {
+                query = query.Where(m => m.Status == req.Status);
             }
 
             result = await query.ToListAsync(ct);
