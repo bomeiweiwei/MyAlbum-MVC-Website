@@ -1,5 +1,6 @@
 ﻿using MyAlbum.Domain;
 using MyAlbum.Domain.Category;
+using MyAlbum.Models.Base;
 using MyAlbum.Models.Category;
 using System;
 using System.Collections.Generic;
@@ -23,8 +24,13 @@ namespace MyAlbum.Application.Category.implement
             return await _albumCategoryReadRepository.GetAlbumCategoryAsync(req, ct);
         }
 
-        public async Task<List<AlbumCategoryDto>> GetAlbumCategoryListAsync(GetAlbumCategoryReq req, CancellationToken ct = default)
+        public async Task<ResponseBase<List<AlbumCategoryDto>>> GetAlbumCategoryListAsync(PageRequestBase<GetAlbumCategoryReq> req, CancellationToken ct = default)
         {
+            var result = new ResponseBase<List<AlbumCategoryDto>>()
+            {
+                Data = new List<AlbumCategoryDto>()
+            };
+             
             return await _albumCategoryReadRepository.GetAlbumCategoryListAsync(req, ct);
         }
     }

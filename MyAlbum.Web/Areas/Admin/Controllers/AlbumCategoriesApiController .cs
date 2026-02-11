@@ -26,15 +26,14 @@ namespace MyAlbum.Web.Areas.Admin.Controllers
             _create = create;
             _update = update;
         }
-        // GET /Admin/Api/AlbumCategoriesApi?CategoryName=xxx
+        // /Admin/Api/AlbumCategoriesApi?pageIndex=1&pageSize=10
+        // /Admin/Api/AlbumCategoriesApi?pageIndex=1&pageSize=10&Data.CategoryName=美食&Data.Status=1
         [HttpGet]
-        public async Task<ActionResult<List<AlbumCategoryDto>>> List([FromQuery] GetAlbumCategoryReq req, CancellationToken ct)
+        public async Task<ActionResult<ResponseBase<List<AlbumCategoryDto>>>> List([FromQuery] PageRequestBase<GetAlbumCategoryReq> req, CancellationToken ct = default)
         {
-            // List 不需要 AlbumCategoryId，避免被 ModelBinding 帶預設 Guid.Empty 造成困擾
-            req.AlbumCategoryId = Guid.Empty;
-
-            var data = await _read.GetAlbumCategoryListAsync(req, ct);
-            return Ok(data);
+            req.Data.AlbumCategoryId = Guid.Empty;
+            var result = await _read.GetAlbumCategoryListAsync(req, ct);
+            return Ok(result);
         }
 
         // GET /Admin/Api/AlbumCategoriesApi/{id}
