@@ -26,11 +26,6 @@ namespace MyAlbum.Application.Category.implement
 
         public async Task<ResponseBase<List<AlbumCategoryDto>>> GetAlbumCategoryListAsync(PageRequestBase<GetAlbumCategoryReq> req, CancellationToken ct = default)
         {
-            var result = new ResponseBase<List<AlbumCategoryDto>>()
-            {
-                Data = new List<AlbumCategoryDto>()
-            };
-             
             return await _albumCategoryReadRepository.GetAlbumCategoryListAsync(req, ct);
         }
     }
