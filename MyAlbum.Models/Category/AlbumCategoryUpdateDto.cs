@@ -11,6 +11,7 @@ namespace MyAlbum.Models.Category
         public string CategoryName { get; set; } = string.Empty;
         public int SortOrder { get; set; }
         public Status Status { get; set; }
+        public DateTime UpdatedAtUtc { get; set; } = DateTime.UtcNow;
         public Guid UpdatedBy { get; set; }
     }
 }

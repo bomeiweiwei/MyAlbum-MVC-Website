@@ -31,6 +31,7 @@ namespace MyAlbum.Application.Category.implement
                 CategoryName = req.CategoryName,
                 SortOrder = req.SortOrder,
                 Status = req.Status,
+                UpdatedAtUtc = DateTime.UtcNow,
                 UpdatedBy = operatorId
             };
             return await _albumCategoryUpdateRepository.UpdateAlbumCategoryAsync(dto, ct);
@@ -43,6 +44,7 @@ namespace MyAlbum.Application.Category.implement
             {
                 AlbumCategoryId = req.AlbumCategoryId,
                 Status = req.Status,
+                UpdatedAtUtc = DateTime.UtcNow,
                 UpdatedBy = operatorId
             };
             return await _albumCategoryUpdateRepository.UpdateAlbumCategoryActiveAsync(dto, ct);
