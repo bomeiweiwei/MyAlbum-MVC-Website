@@ -1,0 +1,60 @@
+0. 資料庫的表格名稱：AlbumComment
+1. 類別名稱：AlbumComment
+2. 類別屬性：
+    public Guid AlbumCommentId { get; set; }
+
+    public Guid AlbumPhotoId { get; set; }
+
+    public Guid MemberId { get; set; }
+
+    public string Comment { get; set; } = null!;
+
+    public DateTime ReleaseTimeUtc { get; set; }
+
+    public bool IsChanged { get; set; }
+
+    public byte Status { get; set; }
+
+    public DateTime CreatedAtUtc { get; set; }
+
+    public DateTime UpdatedAtUtc { get; set; }
+
+    public Guid CreatedBy { get; set; }
+
+    public Guid UpdatedBy { get; set; }
+	
+3. 請設計一個跟讀取相關的介面的Service，名稱是：I類別名稱ReadService
+4. 介面的Repository一定有2個方法，設定為：
+4-1. 方法一定都會帶：
+4-1-1. Req類別：
+4-1-1-1. 名稱：Get類別名稱Req，此類別已經在Repo做過設定，所以屬性略過
+4-1-2. CancellationToken ct = default
+
+4-2. 方法一定都會回傳一個Dto，名稱：類別名稱Dto，此類別已經在Repo做過設定，所以屬性略過
+
+4-3. 方法名稱1：Get類別名稱Async，只取一個Dto物件，可為null
+
+4-4. 方法名稱2：Get類別名稱ListAsync，取得Dto List
+
+4-5. 請撰寫<<類別名稱>>ReadService來實作介面
+    public class 類別名稱ReadService : BaseService, I類別名稱ReadService
+    {
+        private readonly I類別名稱ReadRepository _mainRepo;
+        public 類別名稱ReadService(
+            IAlbumDbContextFactory factory,
+            I類別名稱ReadRepository mainrepo
+            ) : base(factory)
+        {
+            _mainRepo = mainrepo;
+        }
+
+        public async Task<類別名稱Dto?> Get類別名稱Async(Get類別名稱Req req, CancellationToken ct = default)
+        {
+            return await _mainRepo.Get<<類別名稱>>Async(req, ct);
+        }
+
+        public async Task<List<類別名稱Dto>> Get類別名稱ListAsync(Get類別名稱Req req, CancellationToken ct = default)
+        {
+            return await _mainRepo.Get類別名稱ListAsync(req, ct);
+        }
+    }
