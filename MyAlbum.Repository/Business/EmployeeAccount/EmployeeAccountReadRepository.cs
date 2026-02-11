@@ -78,6 +78,7 @@ namespace MyAlbum.Repository.Business.EmployeeAccount
                         join account in db.Accounts.AsNoTracking() on emp.AccountId equals account.AccountId
                         where
                             account.AccountType == (int)AccountType.Admin
+                        orderby emp.CreatedAtUtc
                         select new EmployeeAccountDto()
                         {
                             EmployeeId = emp.EmployeeId,
@@ -90,6 +91,8 @@ namespace MyAlbum.Repository.Business.EmployeeAccount
 
             if (!string.IsNullOrWhiteSpace(req.Data.UserName))
                 query = query.Where(x => x.UserName.Contains(req.Data.UserName));
+            if (req.Data.Status.HasValue)
+                query = query.Where(m => m.Status == req.Data.Status);
 
             result.Count = await query.CountAsync();
             result.Data = await query.Skip((req.pageIndex - 1) * req.pageSize).Take(req.pageSize).AsNoTracking().ToListAsync(ct);

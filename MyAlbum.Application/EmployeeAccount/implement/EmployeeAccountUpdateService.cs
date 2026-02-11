@@ -53,7 +53,7 @@ namespace MyAlbum.Application.EmployeeAccount.implement
             {
                 AccountId = req.AccountId,
                 PasswordHash = passwordHash,
-                Status = req.AccountStatus,
+                Status = req.Status,
                 UpdateBy = operatorId
             };
 
@@ -63,7 +63,7 @@ namespace MyAlbum.Application.EmployeeAccount.implement
                 AccountId = req.AccountId,
                 Email = req.Email,
                 Phone = req.Phone,
-                Status = req.EmployeeStatus,
+                Status = req.Status,
                 UpdateBy = operatorId
             };
 

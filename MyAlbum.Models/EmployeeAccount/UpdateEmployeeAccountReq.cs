@@ -22,12 +22,10 @@ namespace MyAlbum.Models.EmployeeAccount
         [StringLength(320)]
         public string Email { get; set; } = string.Empty;
 
-        [Phone(ErrorMessage = "手機格式不正確")]
         [StringLength(20)]
-        public string? Phone { get; set; } = null;
+        public string? Phone { get; set; }
 
-        public Status AccountStatus { get; set; } = Status.Active;
-        public Status EmployeeStatus { get; set; } = Status.Active;
+        public Status Status { get; set; } = Status.Active;
 
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
         {
@@ -55,6 +53,15 @@ namespace MyAlbum.Models.EmployeeAccount
                         "密碼至少 6 碼",
                         new[] { nameof(Password) }
                     );
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(Phone))
+            {
+                var phoneAttr = new PhoneAttribute();
+                if (!phoneAttr.IsValid(Phone))
+                {
+                    yield return new ValidationResult("手機格式不正確", new[] { nameof(Phone) });
                 }
             }
         }
