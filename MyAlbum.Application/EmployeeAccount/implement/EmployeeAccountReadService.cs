@@ -1,5 +1,6 @@
 ﻿using MyAlbum.Domain;
 using MyAlbum.Domain.EmployeeAccount;
+using MyAlbum.Models.Base;
 using MyAlbum.Models.EmployeeAccount;
 using System;
 using System.Collections.Generic;
@@ -22,7 +23,7 @@ namespace MyAlbum.Application.EmployeeAccount.implement
             return await _employeeAccountReadRepository.GetEmployeeAccountAsync(req, ct);
         }
 
-        public async Task<List<EmployeeAccountDto>> GetEmployeeAccountListAsync(GetEmployeeAccountListReq req, CancellationToken ct = default)
+        public async Task<ResponseBase<List<EmployeeAccountDto>>> GetEmployeeAccountListAsync(PageRequestBase<GetEmployeeAccountListReq> req, CancellationToken ct = default)
         {
             return await _employeeAccountReadRepository.GetEmployeeAccountListAsync(req, ct);
         }
