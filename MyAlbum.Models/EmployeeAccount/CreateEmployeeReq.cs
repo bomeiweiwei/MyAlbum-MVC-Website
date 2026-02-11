@@ -9,8 +9,19 @@ namespace MyAlbum.Models.EmployeeAccount
 {
     public class CreateEmployeeReq : BaseCreateReq
     {
-        [Phone(ErrorMessage = "手機格式不正確")]
         [StringLength(20)]
-        public string? Phone { get; set; } = null;
+        public string? Phone { get; set; }
+
+        public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+        {
+            if (!string.IsNullOrWhiteSpace(Phone))
+            {
+                var phoneAttr = new PhoneAttribute();
+                if (!phoneAttr.IsValid(Phone))
+                {
+                    yield return new ValidationResult("手機格式不正確", new[] { nameof(Phone) });
+                }
+            }
+        }
     }
 }
