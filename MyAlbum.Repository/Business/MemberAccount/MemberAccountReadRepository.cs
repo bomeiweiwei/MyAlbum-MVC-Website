@@ -63,6 +63,7 @@ namespace MyAlbum.Repository.Business.MemberAccount
                             Email = member.Email,
                             DisplayName = member.DisplayName,
                             Status = (Status)account.Status,
+                            PublicAvatarUrl = member.AvatarPath
                         };
             result = await query.FirstOrDefaultAsync(ct);
 
@@ -87,6 +88,7 @@ namespace MyAlbum.Repository.Business.MemberAccount
                             Email = member.Email,
                             DisplayName = member.DisplayName,
                             Status = (Status)account.Status,
+                            PublicAvatarUrl = member.AvatarPath
                         };
 
             if (!string.IsNullOrWhiteSpace(req.Data.UserName))

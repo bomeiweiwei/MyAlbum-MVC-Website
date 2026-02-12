@@ -13,5 +13,7 @@ namespace MyAlbum.Models.MemberAccount
         public string Email { get; set; }
         public string DisplayName { get; set; }
         public Status Status { get; set; }
+
+        public string? PublicAvatarUrl { get; set; }
     }
 }
