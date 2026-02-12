@@ -1,6 +1,7 @@
 ﻿using MyAlbum.Domain;
 using MyAlbum.Domain.EmployeeAccount;
 using MyAlbum.Domain.MemberAccount;
+using MyAlbum.Models.Base;
 using MyAlbum.Models.EmployeeAccount;
 using MyAlbum.Models.MemberAccount;
 using System;
@@ -24,7 +25,7 @@ namespace MyAlbum.Application.MemberAccount.implement
             return await _memberAccountReadRepository.GetMemberAccountAsync(req, ct);
         }
 
-        public async Task<List<MemberAccountDto>> GetMemberAccountListAsync(GetMemberAccountListReq req, CancellationToken ct = default)
+        public async Task<ResponseBase<List<MemberAccountDto>>> GetMemberAccountListAsync(PageRequestBase<GetMemberAccountListReq> req, CancellationToken ct = default)
         {
             return await _memberAccountReadRepository.GetMemberAccountListAsync(req, ct);
         }

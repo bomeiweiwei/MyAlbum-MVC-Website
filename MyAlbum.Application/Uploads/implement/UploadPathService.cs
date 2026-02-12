@@ -41,7 +41,6 @@ namespace MyAlbum.Application.Uploads.implement
             {
                 ".jpg" or ".jpeg" => ".jpg",
                 ".png" => ".png",
-                ".webp" => ".webp",
                 _ => ext
             };
         }

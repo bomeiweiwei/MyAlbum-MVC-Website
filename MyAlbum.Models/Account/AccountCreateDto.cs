@@ -9,6 +9,7 @@ namespace MyAlbum.Models.Account
         public Guid AccountId { get; set; }
         public string UserName { get; set; }
         public string PasswordHash { get; set; }
+        public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
         public Guid CreatedBy { get; set; }
     }
 }

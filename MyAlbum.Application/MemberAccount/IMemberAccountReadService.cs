@@ -1,4 +1,5 @@
-﻿using MyAlbum.Models.EmployeeAccount;
+﻿using MyAlbum.Models.Base;
+using MyAlbum.Models.EmployeeAccount;
 using MyAlbum.Models.MemberAccount;
 using System;
 using System.Collections.Generic;
@@ -10,6 +11,6 @@ namespace MyAlbum.Application.MemberAccount
     {
         Task<MemberAccountDto?> GetMemberAccountAsync(GetMemberAccountReq req, CancellationToken ct = default);
 
-        Task<List<MemberAccountDto>> GetMemberAccountListAsync(GetMemberAccountListReq req, CancellationToken ct = default);
+        Task<ResponseBase<List<MemberAccountDto>>> GetMemberAccountListAsync(PageRequestBase<GetMemberAccountListReq> req, CancellationToken ct = default);
     }
 }

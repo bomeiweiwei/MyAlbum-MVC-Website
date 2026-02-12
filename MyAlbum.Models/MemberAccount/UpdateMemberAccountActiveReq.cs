@@ -13,7 +13,6 @@ namespace MyAlbum.Models.MemberAccount
         [Required]
         public Guid AccountId { get; set; }
 
-        public Status AccountStatus { get; set; } = Status.Active;
-        public Status MemberStatus { get; set; } = Status.Active;
+        public Status Status { get; set; } = Status.Active;
     }
 }

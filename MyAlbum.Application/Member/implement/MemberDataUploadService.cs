@@ -1,6 +1,7 @@
 ﻿using MyAlbum.Application.Uploads;
 using MyAlbum.Domain;
 using MyAlbum.Domain.Member;
+using MyAlbum.Shared.Enums;
 using MyAlbum.Shared.Extensions;
 using MyAlbum.Shared.Idenyity;
 using System;
@@ -26,7 +27,7 @@ namespace MyAlbum.Application.Member.implement
             _memberUpdateRepository = memberUpdateRepository;
         }
 
-        public async Task<string> UploadAvatarAsync(Guid memberId, Stream fileStream, string originalFileName, CancellationToken ct)
+        public async Task<string> UploadAvatarAsync(Guid memberId, Stream fileStream, string originalFileName, Mode mode, CancellationToken ct)
         {
             var operatorId = _currentUser.GetRequiredAccountId();
             var fileKey = _paths.BuildMemberAvatarFileKey(memberId, originalFileName);
@@ -40,10 +41,13 @@ namespace MyAlbum.Application.Member.implement
                 {
                     await fileStream.CopyToAsync(outStream, ct);
                 }
-
-                await _memberUpdateRepository.UpdateMemberAvatarPathAsync(memberId, fileKey, operatorId, ct);
-
-                return _paths.ToPublicUrl(fileKey);
+                if (mode == Mode.Upload)
+                {
+                    await _memberUpdateRepository.UpdateMemberAvatarPathAsync(memberId, fileKey, operatorId, ct);
+                    return _paths.ToPublicUrl(fileKey);
+                }
+                else
+                    return fileKey;
             }
             catch
             {
