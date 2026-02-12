@@ -10,12 +10,13 @@ namespace MyAlbum.Models.MemberAccount
     {
         [Required]
         public Guid MemberId { get; set; }
+
         [Required]
         public Guid AccountId { get; set; }
 
-        public string? Password { get; set; } = null;
+        public string? Password { get; set; }
 
-        public string? ConfirmPassword { get; set; } = null;
+        public string? ConfirmPassword { get; set; }
 
         [Required(ErrorMessage = "Email必填")]
         [EmailAddress(ErrorMessage = "Email 格式不正確")]
@@ -26,8 +27,13 @@ namespace MyAlbum.Models.MemberAccount
         [StringLength(50, MinimumLength = 1, ErrorMessage = "顯示名稱長度需介於 1~50")]
         public string DisplayName { get; set; } = string.Empty;
 
-        public Status AccountStatus { get; set; } = Status.Active;
-        public Status MemberStatus { get; set; } = Status.Active;
+        public Status Status { get; set; } = Status.Active;
+
+        // 檔案用
+        public string? AvatarPath { get; set; }
+        // 檔案上傳用
+        public byte[]? FileBytes { get; set; }
+        public string? FileName { get; set; }
 
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
         {

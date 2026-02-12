@@ -38,11 +38,11 @@ namespace MyAlbum.Repository.Business.Category
                 await using var tx = await db.Database.BeginTransactionAsync(ct);
                 try
                 {
-                    DateTime now = DateTime.UtcNow;
-
                     data.CategoryName = dto.CategoryName;
                     data.SortOrder = dto.SortOrder;
                     data.Status = (byte)dto.Status;
+                    data.UpdatedAtUtc = dto.UpdatedAtUtc;
+                    data.UpdatedBy = dto.UpdatedBy;
 
                     await db.SaveChangesAsync(ct);
 
@@ -77,9 +77,8 @@ namespace MyAlbum.Repository.Business.Category
                 await using var tx = await db.Database.BeginTransactionAsync(ct);
                 try
                 {
-                    DateTime now = DateTime.UtcNow;
-
                     data.Status = (byte)dto.Status;
+                    data.UpdatedAtUtc = dto.UpdatedAtUtc;
                     data.UpdatedBy = dto.UpdatedBy;
 
                     await db.SaveChangesAsync(ct);

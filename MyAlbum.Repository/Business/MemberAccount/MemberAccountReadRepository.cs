@@ -2,6 +2,7 @@
 using MyAlbum.Domain;
 using MyAlbum.Domain.MemberAccount;
 using MyAlbum.Infrastructure.EF.Data;
+using MyAlbum.Models.Base;
 using MyAlbum.Models.EmployeeAccount;
 using MyAlbum.Models.Identity;
 using MyAlbum.Models.MemberAccount;
@@ -62,15 +63,16 @@ namespace MyAlbum.Repository.Business.MemberAccount
                             Email = member.Email,
                             DisplayName = member.DisplayName,
                             Status = (Status)account.Status,
+                            PublicAvatarUrl = member.AvatarPath
                         };
             result = await query.FirstOrDefaultAsync(ct);
 
             return result;
         }
 
-        public async Task<List<MemberAccountDto>> GetMemberAccountListAsync(GetMemberAccountListReq req, CancellationToken ct = default)
+        public async Task<ResponseBase<List<MemberAccountDto>>> GetMemberAccountListAsync(PageRequestBase<GetMemberAccountListReq> req, CancellationToken ct = default)
         {
-            var result = new List<MemberAccountDto>();
+            var result = new ResponseBase<List<MemberAccountDto>>();
             using var ctx = _factory.Create(ConnectionMode.Slave);
             var db = ctx.AsDbContext<MyAlbumContext>();
 
@@ -86,15 +88,20 @@ namespace MyAlbum.Repository.Business.MemberAccount
                             Email = member.Email,
                             DisplayName = member.DisplayName,
                             Status = (Status)account.Status,
+                            PublicAvatarUrl = member.AvatarPath
                         };
 
-            if (!string.IsNullOrWhiteSpace(req.UserName))
-                query = query.Where(x => x.UserName.Contains(req.UserName));
+            if (!string.IsNullOrWhiteSpace(req.Data.UserName))
+                query = query.Where(x => x.UserName.Contains(req.Data.UserName));
 
-            if (!string.IsNullOrWhiteSpace(req.DisplayName))
-                query = query.Where(x => x.DisplayName.Contains(req.DisplayName));
+            if (!string.IsNullOrWhiteSpace(req.Data.DisplayName))
+                query = query.Where(x => x.DisplayName.Contains(req.Data.DisplayName));
 
-            result = await query.ToListAsync(ct);
+            if (req.Data.Status.HasValue)
+                query = query.Where(x => x.Status == req.Data.Status);
+
+            result.Count = await query.CountAsync();
+            result.Data = await query.Skip((req.pageIndex - 1) * req.pageSize).Take(req.pageSize).AsNoTracking().ToListAsync(ct);
 
             return result;
         }
