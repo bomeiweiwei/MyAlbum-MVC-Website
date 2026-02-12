@@ -1,0 +1,419 @@
+﻿
+@{
+    ViewData["Title"] = "會員管理";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div id="app" class="p-3">
+    <el-card shadow="never">
+        <template #header>
+            <div style="display:flex; flex-direction:column; gap:12px;">
+
+                <!-- 第一行：標題 -->
+                <div style="font-size:16px; font-weight:600;">
+                    會員管理
+                </div>
+
+                <!-- 第二行：左查詢區 + 右新增按鈕 -->
+                <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
+
+                    <!-- 左側：查詢條件 -->
+                    <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+
+                        <el-input v-model="query.userName"
+                                  placeholder="搜尋使用者名稱"
+                                  clearable
+                                  style="width:260px;">
+                        </el-input>
+                        <el-input v-model="query.displayName"
+                                  placeholder="搜尋使用者名稱"
+                                  clearable
+                                  style="width:260px;">
+                        </el-input>
+
+                        <el-select v-model="query.statusFilter"
+                                   placeholder="狀態"
+                                   clearable
+                                   style="width:140px;">
+                            <el-option label="全部" :value="null"></el-option>
+                            <el-option label="啟用" :value="statusValues.enabled"></el-option>
+                            <el-option label="停用" :value="statusValues.disabled"></el-option>
+                        </el-select>
+
+                        <el-button v-on:click="onSearch">查詢</el-button>
+                        <el-button v-on:click="resetQuery">清除</el-button>
+
+                    </div>
+
+                    <!-- 右側：新增按鈕 -->
+                    <div>
+                        <el-button type="primary" v-on:click="openCreate">
+                            新增
+                        </el-button>
+                    </div>
+
+                </div>
+            </div>
+        </template>
+
+        <!-- Table -->
+        <el-table :data="rows" v-loading="loading" border style="width:100%;">
+            <el-table-column prop="userName" label="使用者名稱" min-width="150"></el-table-column>
+            <el-table-column prop="displayName" label="顯示名稱" width="150"></el-table-column>
+            <el-table-column prop="email" label="Email" width="200"></el-table-column>
+
+            <el-table-column label="狀態" width="140">
+                <template #default="scope">
+                    <el-tag v-if="isEnabled(scope.row.status)" type="success">啟用</el-tag>
+                    <el-tag v-else type="info">停用</el-tag>
+                </template>
+            </el-table-column>
+
+            <el-table-column label="操作" width="300">
+                <template #default="scope">
+                    <el-button size="small" v-on:click="openEdit(scope.row)">更新</el-button>
+
+                    <el-button size="small"
+                               type="danger"
+                               :disabled="!isEnabled(scope.row.status)"
+                               v-on:click="confirmSetStatus(scope.row, statusValues.disabled)">
+                        停用
+                    </el-button>
+
+                    <el-button size="small"
+                               type="success"
+                               :disabled="isEnabled(scope.row.status)"
+                               v-on:click="confirmSetStatus(scope.row, statusValues.enabled)">
+                        啟用
+                    </el-button>
+                </template>
+            </el-table-column>
+        </el-table>
+
+        <!-- Pagination -->
+        <div style="display:flex; justify-content:flex-end; margin-top:12px;">
+            <el-pagination background
+                           layout="total, sizes, prev, pager, next, jumper"
+                           :total="pager.total"
+                           :page-size="pager.pageSize"
+                           :current-page="pager.pageIndex"
+                           :page-sizes="[10, 20, 50, 100]"
+                           v-on:current-change="onPageChange"
+                           v-on:size-change="onSizeChange">
+            </el-pagination>
+        </div>
+    </el-card>
+
+    <!-- Dialog：Create / Edit -->
+    <el-dialog v-model="dialog.visible"
+               :title="dialog.mode === 'create' ? '新增會員' : '更新會員'"
+               width="560px">
+
+        <el-form :model="form" label-width="90px">
+            <el-form-item label="使用者名稱">
+                <el-input v-model="form.userName" placeholder="請輸入使用者名稱" :disabled="dialog.mode === 'edit'"></el-input>
+            </el-form-item>
+
+            <el-form-item label="密碼">
+                <el-input type="password" v-model="form.password" placeholder="請輸入密碼"></el-input>
+            </el-form-item>
+
+            <el-form-item label="確認密碼">
+                <el-input type="password" v-model="form.confirmPassword" placeholder="請輸入確認密碼"></el-input>
+            </el-form-item>
+
+            <el-form-item label="使用者名稱">
+                <el-input v-model="form.displayName" placeholder="請輸入使用者名稱"></el-input>
+            </el-form-item>
+
+            <el-form-item label="Email">
+                <el-input v-model="form.email" placeholder="請輸入Email"></el-input>
+            </el-form-item>
+
+            <el-form-item v-if="dialog.mode === 'edit'" label="狀態">
+                <el-select v-model="form.status" style="width:100%;">
+                    <el-option label="啟用" :value="statusValues.enabled"></el-option>
+                    <el-option label="停用" :value="statusValues.disabled"></el-option>
+                </el-select>
+            </el-form-item>
+        </el-form>
+
+        <template #footer>
+            <el-button v-on:click="dialog.visible=false">取消</el-button>
+            <el-button type="primary" :loading="dialog.saving" v-on:click="saveDialog">儲存</el-button>
+        </template>
+    </el-dialog>
+</div>
+
+<script>
+    const { createApp, reactive, ref, onMounted } = Vue;
+
+    createApp({
+        setup() {
+            const loading = ref(false);
+            const rows = ref([]);
+
+            // Status enum：1=啟用, 0=停用
+            const statusValues = {
+                enabled: 1,
+                disabled: 0
+            };
+
+            // 查詢條件
+            const query = reactive({
+                userName: '',
+                displayName: '',
+                statusFilter: null // null=全部
+            });
+
+            // 分頁
+            const pager = reactive({
+                pageIndex: 1,
+                pageSize: 10,
+                total: 0
+            });
+
+            // Dialog
+            const dialog = reactive({
+                visible: false,
+                mode: 'create', // create | edit
+                saving: false
+            });
+
+            // Form
+            const form = reactive({
+                memberId: null,
+                accountId: null,
+                userName: '',
+                password: '',
+                confirmPassword: '',
+                email: '',
+                displayName: '',
+                status: statusValues.enabled,
+                file: null
+            });
+
+            const apiJson = axios.create({
+                baseURL: '/Admin/Api/MemberAccountApi',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const apiForm = axios.create({
+                baseURL: '/Admin/Api/MemberAccountApi'
+            });
+
+            function isEnabled(status) {
+                return status === statusValues.enabled;
+            }
+
+            // List：GET /Admin/Api/MemberAccountApi?pageIndex=1&pageSize=10&Data.UserName=jer
+            async function loadList() {
+                loading.value = true;
+                try {
+                    const resp = await apiJson.get('', {
+                        params: {
+                            pageIndex: pager.pageIndex,
+                            pageSize: pager.pageSize,
+                            'Data.UserName': query.userName || null,
+                            'Data.DisplayName': query.displayName || null,
+                            'Data.Status': query.statusFilter
+                        }
+                    });
+
+                    const payload = resp.data || {};
+                    rows.value = payload.data ?? payload.Data ?? [];
+                    pager.total = payload.count ?? payload.Count ?? 0;
+                } catch (e) {
+                    ElementPlus.ElMessage.error('載入列表失敗');
+                } finally {
+                    loading.value = false;
+                }
+            }
+
+            function onSearch() {
+                pager.pageIndex = 1;
+                loadList();
+            }
+
+            function resetQuery() {
+                query.userName = '';
+                query.displayName = '';
+                query.statusFilter = null;
+                pager.pageIndex = 1;
+                loadList();
+            }
+
+            function onPageChange(page) {
+                pager.pageIndex = page;
+                loadList();
+            }
+
+            function onSizeChange(size) {
+                pager.pageSize = size;
+                pager.pageIndex = 1;
+                loadList();
+            }
+
+            function openCreate() {
+                dialog.mode = 'create';
+                form.memberId = null;
+                form.accountId = null;
+                form.userName = '';
+                form.password = '';
+                form.confirmPassword = '';
+                form.email = '';
+                form.displayName = '';
+                form.status = statusValues.enabled;
+                form.file = null;
+                dialog.visible = true;
+            }
+
+            function toFormData(obj) {
+                const fd = new FormData();
+                Object.entries(obj).forEach(([k, v]) => {
+                    if (v === undefined || v === null) return;
+                    fd.append(k, v);
+                });
+                return fd;
+            }
+
+            async function openEdit(row) {
+                dialog.mode = 'edit';
+                dialog.visible = true;
+                dialog.saving = false;
+
+                try {
+                    const resp = await apiJson.get(`/${row.memberId}/${row.accountId}`);
+                    const dto = resp.data;
+
+                    form.memberId = dto.memberId ?? dto.memberId;
+                    form.accountId = dto.accountId ?? dto.accountId;
+                    form.userName = dto.userName ?? dto.userName;
+                    form.email = dto.email ?? dto.email;
+                    form.displayName = dto.displayName ?? dto.displayName;
+                    form.status = dto.status ?? dto.Status;
+                    form.file = null;
+                } catch (e) {
+                    ElementPlus.ElMessage.error('讀取資料失敗');
+                    dialog.visible = false;
+                }
+            }
+
+            async function saveDialog() {
+                if (!form.userName || !form.userName.trim()) {
+                    ElementPlus.ElMessage.warning('使用者名稱必填');
+                    return;
+                }
+                if ((!form.password || !form.password.trim()) && dialog.mode === 'create') {
+                    ElementPlus.ElMessage.warning('密碼必填');
+                    return;
+                }
+                if ((!form.confirmPassword || !form.confirmPassword.trim()) && dialog.mode === 'create') {
+                    ElementPlus.ElMessage.warning('確認密碼必填');
+                    return;
+                }
+                if (!form.email || !form.email.trim()) {
+                    ElementPlus.ElMessage.warning('Email必填');
+                    return;
+                }
+                if (!form.displayName || !form.displayName.trim()) {
+                    ElementPlus.ElMessage.warning('顯示名稱必填');
+                    return;
+                }
+
+                dialog.saving = true;
+                try {
+                    if (dialog.mode === 'create') {
+                        const file = form.file?.raw ?? form.file ?? null;
+                        const fd = toFormData({
+                              userName: form.userName,
+                              password: form.password,
+                              confirmPassword: form.confirmPassword,
+                              email: form.email,
+                              displayName: form.displayName,
+                              // 只有有檔案才塞
+                              ...(file ? { file } : {})
+                        });
+                        const { data: id } = await apiForm.post('CreateMemberWithUpload', fd);
+                        console.log(id);
+                        ElementPlus.ElMessage.success('新增成功');
+                        dialog.visible = false;
+                        loadList();
+                    } else {
+                        const file = form.file?.raw ?? form.file ?? null;
+                        const fd = toFormData({
+                              memberId: form.memberId,
+                              accountId: form.accountId,
+                              password: form.password ?? '',
+                              confirmPassword: form.confirmPassword ?? '',
+                              email: form.email,
+                              status: form.status,
+                              displayName: form.displayName,
+                              ...(file ? { file } : {})
+                        });
+                        const { data: ok } = await apiForm.put(`/${form.memberId}/${form.accountId}`, fd);
+                        console.log(ok);
+                        ElementPlus.ElMessage.success('更新成功');
+                        form.password = '';
+                        form.confirmPassword = '';
+                        dialog.visible = false;
+                        loadList();
+                    }
+                } catch (e) {
+                    console.log(e)
+                    ElementPlus.ElMessage.error('儲存失敗（請檢查欄位或後端驗證）');
+                } finally {
+                    dialog.saving = false;
+                }
+            }
+
+            async function confirmSetStatus(row, newStatus) {
+                const actionText = (newStatus === statusValues.disabled) ? '停用' : '啟用';
+
+                try {
+                    await ElementPlus.ElMessageBox.confirm(
+                        `確定要${actionText}「${row.userName}」？`,
+                        `${actionText}確認`,
+                        { type: 'warning' }
+                    );
+
+                    const resp = await apiJson.patch(`/${row.memberId}/${row.accountId}/status`, {
+                        status: newStatus
+                    });
+
+                    const ok = resp.data === true || resp.data === "true";
+                    if (ok) {
+                        row.status = newStatus;
+                        ElementPlus.ElMessage.success(`${actionText}成功`);
+                    } else {
+                        ElementPlus.ElMessage.error(`${actionText}失敗`);
+                    }
+                } catch {
+                    // cancel / ignore
+                }
+            }
+
+            onMounted(loadList);
+
+            return {
+                loading,
+                rows,
+                query,
+                pager,
+                dialog,
+                form,
+                statusValues,
+                isEnabled,
+                loadList,
+                onSearch,
+                resetQuery,
+                onPageChange,
+                onSizeChange,
+                openCreate,
+                openEdit,
+                saveDialog,
+                confirmSetStatus
+            };
+        }
+    }).use(ElementPlus).mount('#app');
+</script>
+
