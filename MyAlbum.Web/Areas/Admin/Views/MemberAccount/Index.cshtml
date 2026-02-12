@@ -1,6 +1,6 @@
 ﻿
 @{
-    ViewData["Title"] = "員工管理";
+    ViewData["Title"] = "會員管理";
     Layout = "~/Views/Shared/_AdminLayout.cshtml";
 }
 
@@ -11,7 +11,7 @@
 
                 <!-- 第一行：標題 -->
                 <div style="font-size:16px; font-weight:600;">
-                    員工管理
+                    會員管理
                 </div>
 
                 <!-- 第二行：左查詢區 + 右新增按鈕 -->
@@ -21,6 +21,11 @@
                     <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
 
                         <el-input v-model="query.userName"
+                                  placeholder="搜尋使用者名稱"
+                                  clearable
+                                  style="width:260px;">
+                        </el-input>
+                        <el-input v-model="query.displayName"
                                   placeholder="搜尋使用者名稱"
                                   clearable
                                   style="width:260px;">
@@ -54,8 +59,8 @@
         <!-- Table -->
         <el-table :data="rows" v-loading="loading" border style="width:100%;">
             <el-table-column prop="userName" label="使用者名稱" min-width="150"></el-table-column>
+            <el-table-column prop="displayName" label="顯示名稱" width="150"></el-table-column>
             <el-table-column prop="email" label="Email" width="200"></el-table-column>
-            <el-table-column prop="phone" label="手機" width="200"></el-table-column>
 
             <el-table-column label="狀態" width="140">
                 <template #default="scope">
@@ -101,10 +106,15 @@
 
     <!-- Dialog：Create / Edit -->
     <el-dialog v-model="dialog.visible"
-               :title="dialog.mode === 'create' ? '新增員工' : '更新員工'"
+               :title="dialog.mode === 'create' ? '新增會員' : '更新會員'"
                width="560px">
 
         <el-form :model="form" label-width="90px">
+            <el-form-item v-if="form.publicAvatarUrl" label="會員頭像">
+                <img :src="form.publicAvatarUrl"
+                     alt="avatar"
+                     style="width:120px;height:120px;object-fit:cover;border-radius:8px;border:1px solid #dcdfe6;" />
+            </el-form-item>
             <el-form-item label="使用者名稱">
                 <el-input v-model="form.userName" placeholder="請輸入使用者名稱" :disabled="dialog.mode === 'edit'"></el-input>
             </el-form-item>
@@ -117,13 +127,38 @@
                 <el-input type="password" v-model="form.confirmPassword" placeholder="請輸入確認密碼"></el-input>
             </el-form-item>
 
+            <el-form-item label="使用者名稱">
+                <el-input v-model="form.displayName" placeholder="請輸入使用者名稱"></el-input>
+            </el-form-item>
+
             <el-form-item label="Email">
                 <el-input v-model="form.email" placeholder="請輸入Email"></el-input>
             </el-form-item>
 
-            <el-form-item label="Phone">
-                <el-input v-model="form.phone" placeholder="請輸入Phone"></el-input>
+            <el-form-item label="頭像">
+                <el-upload :auto-upload="false"
+                           :show-file-list="false"
+                           accept=".jpg,.jpeg,.png"
+                           :before-upload="beforeAvatarUpload"
+                           :on-change="onAvatarChange">
+                    <div style="width:120px;height:120px;border:1px dashed #dcdfe6;border-radius:8px;display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:pointer;">
+                        <img v-if="avatarPreviewUrl" :src="avatarPreviewUrl" style="width:100%;height:100%;object-fit:cover;" />
+                        <div v-else style="text-align:center;color:#909399;font-size:12px;">
+                            <div>點擊選擇圖片</div>
+                            <div style="margin-top:4px;">jpg / jpeg / png</div>
+                        </div>
+                    </div>
+                </el-upload>
+
+                <div v-if="avatarPreviewUrl" style="margin-left:12px;display:flex;flex-direction:column;gap:8px;">
+                    <el-button size="small" v-on:click="avatarPreviewVisible = true">預覽</el-button>
+                    <el-button size="small" type="danger" plain v-on:click="clearAvatar">移除</el-button>
+                    <div v-if="avatarFileName" style="font-size:12px;color:#909399;">
+                        已選：{{ avatarFileName }}
+                    </div>
+                </div>
             </el-form-item>
+
 
             <el-form-item v-if="dialog.mode === 'edit'" label="狀態">
                 <el-select v-model="form.status" style="width:100%;">
@@ -138,6 +173,13 @@
             <el-button type="primary" :loading="dialog.saving" v-on:click="saveDialog">儲存</el-button>
         </template>
     </el-dialog>
+
+    <el-dialog v-model="avatarPreviewVisible" title="圖片預覽" width="520px">
+        <div style="display:flex;justify-content:center;">
+            <img v-if="avatarPreviewUrl" :src="avatarPreviewUrl" style="max-width:100%;max-height:60vh;" />
+        </div>
+    </el-dialog>
+
 </div>
 
 <script>
@@ -157,6 +199,7 @@
             // 查詢條件
             const query = reactive({
                 userName: '',
+                displayName: '',
                 statusFilter: null // null=全部
             });
 
@@ -176,34 +219,85 @@
 
             // Form
             const form = reactive({
-                employeeId: null,
+                memberId: null,
                 accountId: null,
                 userName: '',
                 password: '',
                 confirmPassword: '',
                 email: '',
-                phone: '',
-                status: statusValues.enabled
+                displayName: '',
+                status: statusValues.enabled,
+                file: null,
+                publicAvatarUrl: ''
             });
 
-            const api = axios.create({
-                baseURL: '/Admin/Api/EmployeeAccountApi',
+            const avatarPreviewUrl = ref('');
+            const avatarPreviewVisible = ref(false);
+            const avatarFileName = ref('');
+            function revokeAvatarPreview() {
+                if (avatarPreviewUrl.value) {
+                    URL.revokeObjectURL(avatarPreviewUrl.value);
+                    avatarPreviewUrl.value = '';
+                }
+            }
+            function clearAvatar() {
+                form.file = null;
+                avatarFileName.value = '';
+                avatarPreviewVisible.value = false;
+                revokeAvatarPreview();
+            }
+            function beforeAvatarUpload(rawFile) {
+                const okType = rawFile && (rawFile.type === 'image/jpeg' || rawFile.type === 'image/png');
+                if (!okType) {
+                    ElementPlus.ElMessage.error('只允許上傳 jpg / jpeg / png');
+                    return false;
+                }
+
+                const maxSizeMb = 2;
+                const okSize = rawFile.size / 1024 / 1024 <= maxSizeMb;
+                if (!okSize) {
+                    ElementPlus.ElMessage.error(`圖片大小不可超過 ${maxSizeMb}MB`);
+                    return false;
+                }
+
+                return true;
+            }
+            function onAvatarChange(uploadFile) {
+                const raw = uploadFile?.raw;
+                if (!raw) return;
+
+                if (!beforeAvatarUpload(raw)) return;
+
+                // 存 raw File，等儲存時才跟著 FormData 一起送
+                form.file = raw;
+                avatarFileName.value = raw.name;
+
+                revokeAvatarPreview();
+                avatarPreviewUrl.value = URL.createObjectURL(raw);
+            }
+
+            const apiJson = axios.create({
+                baseURL: '/Admin/Api/MemberAccountApi',
                 headers: { 'Content-Type': 'application/json' }
+            });
+            const apiForm = axios.create({
+                baseURL: '/Admin/Api/MemberAccountApi'
             });
 
             function isEnabled(status) {
                 return status === statusValues.enabled;
             }
 
-            // List：GET /Admin/Api/EmployeeAccountApi?pageIndex=1&pageSize=10&Data.UserName=jer
+            // List：GET /Admin/Api/MemberAccountApi?pageIndex=1&pageSize=10&Data.UserName=jer
             async function loadList() {
                 loading.value = true;
                 try {
-                    const resp = await api.get('', {
+                    const resp = await apiJson.get('', {
                         params: {
                             pageIndex: pager.pageIndex,
                             pageSize: pager.pageSize,
                             'Data.UserName': query.userName || null,
+                            'Data.DisplayName': query.displayName || null,
                             'Data.Status': query.statusFilter
                         }
                     });
@@ -225,6 +319,7 @@
 
             function resetQuery() {
                 query.userName = '';
+                query.displayName = '';
                 query.statusFilter = null;
                 pager.pageIndex = 1;
                 loadList();
@@ -243,38 +338,54 @@
 
             function openCreate() {
                 dialog.mode = 'create';
-                form.employeeId = null;
+                form.memberId = null;
                 form.accountId = null;
                 form.userName = '';
                 form.password = '';
                 form.confirmPassword = '';
                 form.email = '';
-                form.phone = '';
+                form.displayName = '';
                 form.status = statusValues.enabled;
+                form.file = null;
+                form.publicAvatarUrl = '';
+                clearAvatar();
                 dialog.visible = true;
+
+                clearAvatar();
             }
 
             async function openEdit(row) {
                 dialog.mode = 'edit';
+                clearAvatar();
                 dialog.visible = true;
                 dialog.saving = false;
-
                 try {
-                    const resp = await api.get(`/${row.employeeId}/${row.accountId}`);
+                    const resp = await apiJson.get(`/${row.memberId}/${row.accountId}`);
                     const dto = resp.data;
 
-                    form.employeeId = dto.employeeId ?? dto.employeeId;
+                    form.memberId = dto.memberId ?? dto.memberId;
                     form.accountId = dto.accountId ?? dto.accountId;
                     form.userName = dto.userName ?? dto.userName;
                     form.password = '';
                     form.confirmPassword = '';
                     form.email = dto.email ?? dto.email;
-                    form.phone = dto.phone ?? dto.phone;
+                    form.displayName = dto.displayName ?? dto.displayName;
                     form.status = dto.status ?? dto.Status;
+                    form.file = null;
+                    form.publicAvatarUrl = dto.publicAvatarUrl || '';
                 } catch (e) {
                     ElementPlus.ElMessage.error('讀取資料失敗');
                     dialog.visible = false;
                 }
+            }
+
+            function toFormData(obj) {
+                const fd = new FormData();
+                Object.entries(obj).forEach(([k, v]) => {
+                    if (v === undefined || v === null) return;
+                    fd.append(k, v);
+                });
+                return fd;
             }
 
             async function saveDialog() {
@@ -294,32 +405,42 @@
                     ElementPlus.ElMessage.warning('Email必填');
                     return;
                 }
+                if (!form.displayName || !form.displayName.trim()) {
+                    ElementPlus.ElMessage.warning('顯示名稱必填');
+                    return;
+                }
 
                 dialog.saving = true;
                 try {
                     if (dialog.mode === 'create') {
-                        await api.post('', {
-                            userName: form.userName,
-                            password: form.password,
-                            confirmPassword: form.confirmPassword,
-                            email: form.email,
-                            phone: form.phone,
+                        const file = form.file?.raw ?? form.file ?? null;
+                        const fd = toFormData({
+                              userName: form.userName,
+                              password: form.password,
+                              confirmPassword: form.confirmPassword,
+                              email: form.email,
+                              displayName: form.displayName,
+                              ...(form.file ? { file: form.file } : {})
                         });
-
+                        const { data: id } = await apiForm.post('CreateMemberWithUpload', fd);
+                        console.log(id);
                         ElementPlus.ElMessage.success('新增成功');
                         dialog.visible = false;
                         loadList();
                     } else {
-                        await api.put(`/${form.employeeId}/${form.accountId}`, {
-                            employeeId: form.employeeId,
-                            accountId: form.accountId,
-                            password: form.password,
-                            confirmPassword: form.confirmPassword,
-                            email: form.email,
-                            phone: form.phone,
-                            status: form.status
+                        const file = form.file?.raw ?? form.file ?? null;
+                        const fd = toFormData({
+                              memberId: form.memberId,
+                              accountId: form.accountId,
+                              password: form.password ?? '',
+                              confirmPassword: form.confirmPassword ?? '',
+                              email: form.email,
+                              status: form.status,
+                              displayName: form.displayName,
+                              ...(form.file ? { file: form.file } : {})
                         });
-
+                        const { data: ok } = await apiForm.put(`/${form.memberId}/${form.accountId}`, fd);
+                        console.log(ok);
                         ElementPlus.ElMessage.success('更新成功');
                         form.password = '';
                         form.confirmPassword = '';
@@ -327,6 +448,7 @@
                         loadList();
                     }
                 } catch (e) {
+                    console.log(e)
                     ElementPlus.ElMessage.error('儲存失敗（請檢查欄位或後端驗證）');
                 } finally {
                     dialog.saving = false;
@@ -343,7 +465,7 @@
                         { type: 'warning' }
                     );
 
-                    const resp = await api.patch(`/${row.employeeId}/${row.accountId}/status`, {
+                    const resp = await apiJson.patch(`/${row.memberId}/${row.accountId}/status`, {
                         status: newStatus
                     });
 
@@ -378,10 +500,15 @@
                 openCreate,
                 openEdit,
                 saveDialog,
-                confirmSetStatus
+                confirmSetStatus,
+                avatarPreviewUrl,
+                avatarPreviewVisible,
+                avatarFileName,
+                beforeAvatarUpload,
+                onAvatarChange,
+                clearAvatar
             };
         }
     }).use(ElementPlus).mount('#app');
 </script>
-
 

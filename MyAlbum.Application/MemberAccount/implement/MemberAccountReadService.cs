@@ -1,6 +1,9 @@
-﻿using MyAlbum.Domain;
+﻿using MyAlbum.Application.Member;
+using MyAlbum.Application.Uploads;
+using MyAlbum.Domain;
 using MyAlbum.Domain.EmployeeAccount;
 using MyAlbum.Domain.MemberAccount;
+using MyAlbum.Models.Base;
 using MyAlbum.Models.EmployeeAccount;
 using MyAlbum.Models.MemberAccount;
 using System;
@@ -12,21 +15,35 @@ namespace MyAlbum.Application.MemberAccount.implement
     public class MemberAccountReadService : BaseService, IMemberAccountReadService
     {
         private readonly IMemberAccountReadRepository _memberAccountReadRepository;
+        private readonly IUploadPathService _paths;
         public MemberAccountReadService(
           IAlbumDbContextFactory factory,
-          IMemberAccountReadRepository memberAccountReadRepository) : base(factory)
+          IMemberAccountReadRepository memberAccountReadRepository,
+          IUploadPathService paths) : base(factory)
         {
             _memberAccountReadRepository = memberAccountReadRepository;
+            _paths = paths;
         }
 
         public async Task<MemberAccountDto?> GetMemberAccountAsync(GetMemberAccountReq req, CancellationToken ct = default)
         {
-            return await _memberAccountReadRepository.GetMemberAccountAsync(req, ct);
+            var data = await _memberAccountReadRepository.GetMemberAccountAsync(req, ct);
+            if (data != null)
+                data.PublicAvatarUrl = _paths.ToPublicUrl(data.PublicAvatarUrl);
+            return data;
         }
 
-        public async Task<List<MemberAccountDto>> GetMemberAccountListAsync(GetMemberAccountListReq req, CancellationToken ct = default)
+        public async Task<ResponseBase<List<MemberAccountDto>>> GetMemberAccountListAsync(PageRequestBase<GetMemberAccountListReq> req, CancellationToken ct = default)
         {
-            return await _memberAccountReadRepository.GetMemberAccountListAsync(req, ct);
+            var list = await _memberAccountReadRepository.GetMemberAccountListAsync(req, ct);
+            if (list.Data.Count > 0)
+            {
+                foreach (var data in list.Data)
+                {
+                    data.PublicAvatarUrl = _paths.ToPublicUrl(data.PublicAvatarUrl);
+                }
+            }
+            return list;
         }
     }
 }
