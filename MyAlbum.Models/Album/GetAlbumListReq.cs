@@ -5,11 +5,13 @@ using System.Text;
 
 namespace MyAlbum.Models.Album
 {
-    public class GetAlbumReq
+    public class GetAlbumListReq
     {
-        public Guid AlbumId { get; set; }
         public Guid? AlbumCategoryId { get; set; }
         public Guid? OwnerAccountId { get; set; }
+        public string? Title { get; set; } = null;
+        public DateTime? StartReleaseTimeUtc { get; set; }
+        public DateTime? EndReleaseTimeUtc { get; set; }
         public Status? Status { get; set; }
     }
 }

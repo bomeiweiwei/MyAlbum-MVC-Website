@@ -12,7 +12,7 @@ namespace MyAlbum.Models.Album
         public Guid AlbumCategoryId { get; set; }
         #endregion
 
-        public Guid OwnerAccountId { get; set; }
+        public Guid? OwnerAccountId { get; set; }
 
         #region 更新用參數
         public string Title { get; set; } = null!;

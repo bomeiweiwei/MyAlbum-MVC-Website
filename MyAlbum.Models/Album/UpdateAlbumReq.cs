@@ -13,6 +13,8 @@ namespace MyAlbum.Models.Album
         [Required]
         public Guid AlbumCategoryId { get; set; }
 
+        public Guid? OwnerAccountId { get; set; }
+
         [Required(ErrorMessage = "標題必填")]
         [StringLength(100, MinimumLength = 1, ErrorMessage = "標題必填長度需介於 1~100")]
         public string Title { get; set; }
@@ -20,5 +22,9 @@ namespace MyAlbum.Models.Album
         public string? Description { get; set; }
 
         public Status Status { get; set; } = Status.Active;
+
+        // 檔案上傳用
+        public byte[]? FileBytes { get; set; }
+        public string? FileName { get; set; }
     }
 }

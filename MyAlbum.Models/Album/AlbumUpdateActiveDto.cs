@@ -9,10 +9,9 @@ namespace MyAlbum.Models.Album
     {
         #region 查詢用參數
         public Guid AlbumId { get; set; }
-        public Guid AlbumCategoryId { get; set; }
         #endregion
 
-        public Guid OwnerAccountId { get; set; }
+        public Guid? OwnerAccountId { get; set; }
 
         public Status Status { get; set; }
         public Guid UpdateBy { get; set; }

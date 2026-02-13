@@ -12,5 +12,7 @@ namespace MyAlbum.Models.Album
         public Guid AlbumId { get; set; }
         [Required]
         public Status Status { get; set; }
+
+        public Guid? OwnerAccountId { get; set; }
     }
 }
