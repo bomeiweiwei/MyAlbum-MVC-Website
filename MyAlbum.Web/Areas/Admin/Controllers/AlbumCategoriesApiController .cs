@@ -29,10 +29,16 @@ namespace MyAlbum.Web.Areas.Admin.Controllers
         // /Admin/Api/AlbumCategoriesApi?pageIndex=1&pageSize=10
         // /Admin/Api/AlbumCategoriesApi?pageIndex=1&pageSize=10&Data.CategoryName=美食&Data.Status=1
         [HttpGet]
-        public async Task<ActionResult<ResponseBase<List<AlbumCategoryDto>>>> List([FromQuery] PageRequestBase<GetAlbumCategoryReq> req, CancellationToken ct = default)
+        public async Task<ActionResult<ResponseBase<List<AlbumCategoryDto>>>> List([FromQuery] PageRequestBase<GetAlbumCategoryListReq> req, CancellationToken ct = default)
         {
-            req.Data.AlbumCategoryId = Guid.Empty;
             var result = await _read.GetAlbumCategoryListAsync(req, ct);
+            return Ok(result);
+        }
+
+        [HttpGet("items")]
+        public async Task<ActionResult<List<AlbumCategoryDto>>> GetItemListAsync([FromQuery] GetAlbumCategoryListReq req, CancellationToken ct = default) 
+        {
+            var result = await _read.GetAlbumCategoryItemListAsync(req, ct);
             return Ok(result);
         }
 

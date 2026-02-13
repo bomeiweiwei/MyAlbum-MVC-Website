@@ -43,7 +43,7 @@ namespace MyAlbum.Repository.Business.Category
             return result;
         }
 
-        public async Task<ResponseBase<List<AlbumCategoryDto>>> GetAlbumCategoryListAsync(PageRequestBase<GetAlbumCategoryReq> req, CancellationToken ct = default)
+        public async Task<ResponseBase<List<AlbumCategoryDto>>> GetAlbumCategoryListAsync(PageRequestBase<GetAlbumCategoryListReq> req, CancellationToken ct = default)
         {
             var result = new ResponseBase<List<AlbumCategoryDto>>();
             using var ctx = _factory.Create(ConnectionMode.Slave);
