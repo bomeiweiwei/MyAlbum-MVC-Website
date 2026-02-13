@@ -30,11 +30,14 @@ namespace MyAlbum.Application.Album.implement
             var data = await _albumReadRepository.GetAlbumAsync(req, ct);
             if (data != null)
                 data.PublicCoverUrl = _paths.ToPublicUrl(data.PublicCoverUrl);
-            return await _albumReadRepository.GetAlbumAsync(req, ct);
+            return data;
         }
 
         public async Task<ResponseBase<List<AlbumDto>>> GetAlbumListAsync(PageRequestBase<GetAlbumListReq> req, CancellationToken ct = default)
         {
+            req.Data.StartReleaseTimeUtc = req.Data.StartLocalMs.HasValue ? DateTimeOffset.FromUnixTimeMilliseconds(req.Data.StartLocalMs.Value).UtcDateTime : null;
+            req.Data.EndReleaseTimeUtc = req.Data.EndLocalMs.HasValue ? DateTimeOffset.FromUnixTimeMilliseconds(req.Data.EndLocalMs.Value).UtcDateTime : null;
+
             var list = await _albumReadRepository.GetAlbumListAsync(req, ct);
             if (list.Data.Count > 0)
             {

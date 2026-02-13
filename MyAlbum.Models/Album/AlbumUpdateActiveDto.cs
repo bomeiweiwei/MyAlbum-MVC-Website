@@ -11,10 +11,12 @@ namespace MyAlbum.Models.Album
         public Guid AlbumId { get; set; }
         #endregion
 
-        public Guid? OwnerAccountId { get; set; }
+        public Guid OwnerAccountId { get; set; }
 
         public Status Status { get; set; }
         public Guid UpdateBy { get; set; }
         public DateTime UpdatedAtUtc { get; set; } = DateTime.UtcNow;
+
+        public bool UpdateByMember { get; set; } = true;
     }
 }

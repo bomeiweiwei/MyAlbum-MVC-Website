@@ -22,5 +22,7 @@ namespace MyAlbum.Models.Album
         public Guid UpdatedBy { get; set; }
 
         public string PublicCoverUrl { get; set; }
+        public string OwnerName { get; set; }
+        public string CategoryName { get; set; }
     }
 }

@@ -34,8 +34,7 @@ namespace MyAlbum.Application.Album.implement
         {
             var operatorId = _currentUser.GetRequiredAccountId();
             var type = _currentUser.GetRequiredAccountType();
-            if (type == AccountType.Member)
-                req.OwnerAccountId = operatorId;
+            
             AlbumUpdateDto dto = new AlbumUpdateDto
             {
                 AlbumId = req.AlbumId,
@@ -47,6 +46,16 @@ namespace MyAlbum.Application.Album.implement
                 UpdatedAtUtc = DateTime.UtcNow,
                 UpdatedBy = operatorId
             };
+            if (type == AccountType.Member)
+            {
+                // 覆蓋
+                dto.OwnerAccountId = operatorId;
+                dto.UpdateByMember = true;
+            }
+            else
+            {
+                dto.UpdateByMember = false;
+            }
 
             var result = await _albumUpdateRepository.UpdateAlbumAsync(dto, ct);
 
@@ -63,8 +72,7 @@ namespace MyAlbum.Application.Album.implement
         {
             var operatorId = _currentUser.GetRequiredAccountId();
             var type = _currentUser.GetRequiredAccountType();
-            if (type == AccountType.Member)
-                req.OwnerAccountId = operatorId;
+            
             AlbumUpdateActiveDto dto = new AlbumUpdateActiveDto
             {
                 AlbumId = req.AlbumId,
@@ -73,6 +81,16 @@ namespace MyAlbum.Application.Album.implement
                 UpdatedAtUtc = DateTime.UtcNow,
                 UpdateBy = operatorId,
             };
+            if (type == AccountType.Member)
+            {
+                dto.OwnerAccountId = operatorId;
+                dto.UpdateByMember = true;
+            }
+            else
+            {
+                dto.UpdateByMember = false;
+            }
+
             return await _albumUpdateRepository.UpdateAlbumActiveAsync(dto, ct);
         }
     }

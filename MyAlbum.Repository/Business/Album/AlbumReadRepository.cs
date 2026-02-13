@@ -66,6 +66,9 @@ namespace MyAlbum.Repository.Business.Album
             var db = ctx.AsDbContext<MyAlbumContext>();
 
             var query = from main in db.Albums.AsNoTracking()
+                        join category in db.AlbumCategories.AsNoTracking() on main.AlbumCategoryId equals category.AlbumCategoryId
+                        join account in db.Accounts.AsNoTracking() on main.OwnerAccountId equals account.AccountId
+                        join member in db.Members.AsNoTracking() on account.AccountId equals member.AccountId
                         select new AlbumDto()
                         {
                             AlbumId = main.AlbumId,
@@ -81,6 +84,8 @@ namespace MyAlbum.Repository.Business.Album
                             CreatedBy = main.CreatedBy,
                             UpdatedAtUtc = main.UpdatedAtUtc,
                             UpdatedBy = main.UpdatedBy,
+                            OwnerName = member.DisplayName,
+                            CategoryName = category.CategoryName
                         };
             if (req.Data.AlbumCategoryId.HasValue)
             {
@@ -96,19 +101,31 @@ namespace MyAlbum.Repository.Business.Album
             }
             if (req.Data.StartReleaseTimeUtc.HasValue)
             {
-                query = query.Where(m => m.ReleaseTimeUtc >= req.Data.StartReleaseTimeUtc);
+                query = query.Where(m => m.ReleaseTimeUtc >= req.Data.StartReleaseTimeUtc.Value);
             }
+
             if (req.Data.EndReleaseTimeUtc.HasValue)
             {
-                query = query.Where(m => m.ReleaseTimeUtc <= req.Data.EndReleaseTimeUtc);
+                query = query.Where(m => m.ReleaseTimeUtc < req.Data.EndReleaseTimeUtc.Value);
             }
             if (req.Data.Status.HasValue)
             {
                 query = query.Where(m => m.Status == req.Data.Status);
             }
+            if (!string.IsNullOrWhiteSpace(req.Data.OwnerName))
+            {
+                query = query.Where(m => m.OwnerName.Contains(req.Data.OwnerName));
+            }
 
-            result.Count = await query.CountAsync();
+            result.Count = await query.CountAsync(ct);
             result.Data = await query.Skip((req.pageIndex - 1) * req.pageSize).Take(req.pageSize).AsNoTracking().ToListAsync(ct);
+
+            foreach (var item in result.Data)
+            {
+                item.ReleaseTimeUtc = DateTime.SpecifyKind(item.ReleaseTimeUtc, DateTimeKind.Utc);
+                item.CreatedAtUtc = DateTime.SpecifyKind(item.CreatedAtUtc, DateTimeKind.Utc);
+                item.UpdatedAtUtc = DateTime.SpecifyKind(item.UpdatedAtUtc, DateTimeKind.Utc);
+            }
 
             return result;
         }

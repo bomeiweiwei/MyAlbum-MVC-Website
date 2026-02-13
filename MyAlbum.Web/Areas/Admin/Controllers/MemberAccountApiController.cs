@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using MyAlbum.Application.EmployeeAccount;
 using MyAlbum.Application.MemberAccount;
 using MyAlbum.Models.Base;
+using MyAlbum.Models.Category;
 using MyAlbum.Models.EmployeeAccount;
 using MyAlbum.Models.MemberAccount;
 using MyAlbum.Web.Models.MemberAccount;
@@ -34,6 +35,13 @@ namespace MyAlbum.Web.Areas.Admin.Controllers
         public async Task<ActionResult<ResponseBase<List<MemberAccountDto>>>> List([FromQuery] PageRequestBase<GetMemberAccountListReq> req, CancellationToken ct = default)
         {
             var result = await _read.GetMemberAccountListAsync(req, ct);
+            return Ok(result);
+        }
+
+        [HttpGet("items")]
+        public async Task<ActionResult<List<AlbumCategoryDto>>> GetItemListAsync([FromQuery] GetMemberAccountListReq req, CancellationToken ct = default)
+        {
+            var result = await _read.GetMemberAccountItemListAsync(req, ct);
             return Ok(result);
         }
 

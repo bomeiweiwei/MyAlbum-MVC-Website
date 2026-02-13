@@ -12,5 +12,7 @@ namespace MyAlbum.Application.MemberAccount
         Task<MemberAccountDto?> GetMemberAccountAsync(GetMemberAccountReq req, CancellationToken ct = default);
 
         Task<ResponseBase<List<MemberAccountDto>>> GetMemberAccountListAsync(PageRequestBase<GetMemberAccountListReq> req, CancellationToken ct = default);
+
+        Task<List<MemberAccountDto>> GetMemberAccountItemListAsync(GetMemberAccountListReq req, CancellationToken ct = default);
     }
 }

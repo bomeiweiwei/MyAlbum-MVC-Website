@@ -24,16 +24,18 @@ namespace MyAlbum.Repository.Business.Album
             var db = ctx.AsDbContext<MyAlbumContext>();
             var strategy = db.Database.CreateExecutionStrategy();
 
-            var data = await db.Albums.FirstOrDefaultAsync(m => m.AlbumId == dto.AlbumId && m.AlbumCategoryId == dto.AlbumCategoryId);
+            var data = await db.Albums.FirstOrDefaultAsync(m => m.AlbumId == dto.AlbumId);
             if (data == null)
                 throw new InvalidOperationException("找不到指定的資料。");
-            if(dto.OwnerAccountId.HasValue && dto.OwnerAccountId != data.OwnerAccountId)
+            if (dto.UpdateByMember && data.OwnerAccountId != dto.OwnerAccountId)
                 throw new InvalidOperationException("非本人無法更新。");
             await strategy.ExecuteAsync(async () =>
             {
                 await using var tx = await db.Database.BeginTransactionAsync(ct);
                 try
                 {
+                    data.AlbumCategoryId = dto.AlbumCategoryId;
+                    data.OwnerAccountId = dto.OwnerAccountId;
                     data.Title = dto.Title;
                     data.Description = dto.Description;
                     data.Status = (byte)dto.Status;
@@ -67,7 +69,7 @@ namespace MyAlbum.Repository.Business.Album
             var data = await db.Albums.FirstOrDefaultAsync(m => m.AlbumId == dto.AlbumId);
             if (data == null)
                 throw new InvalidOperationException("找不到指定的資料。");
-            if (dto.OwnerAccountId.HasValue && dto.OwnerAccountId != data.OwnerAccountId)
+            if (dto.UpdateByMember && data.OwnerAccountId != dto.OwnerAccountId)
                 throw new InvalidOperationException("非本人無法更新。");
 
             await strategy.ExecuteAsync(async () =>
