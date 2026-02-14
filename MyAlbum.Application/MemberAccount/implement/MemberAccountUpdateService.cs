@@ -10,6 +10,7 @@ using MyAlbum.Models.Employee;
 using MyAlbum.Models.Identity;
 using MyAlbum.Models.Member;
 using MyAlbum.Models.MemberAccount;
+using MyAlbum.Models.UploadFiles;
 using MyAlbum.Shared.Enums;
 using MyAlbum.Shared.Extensions;
 using MyAlbum.Shared.Idenyity;
@@ -45,7 +46,7 @@ namespace MyAlbum.Application.MemberAccount.implement
             _memberDataUploadService = memberDataUploadService;
         }
 
-        public async Task<bool> UpdateMemberAccountAsync(UpdateMemberAccountReq req, CancellationToken ct = default)
+        public async Task<bool> UpdateMemberAccountAsync(UpdateMemberAccountReq req, IReadOnlyList<UploadFileStream> files, CancellationToken ct = default)
         {
             var result = false;
             var operatorId = _currentUser.GetRequiredAccountId();
@@ -55,12 +56,14 @@ namespace MyAlbum.Application.MemberAccount.implement
                 passwordHash = _hasher.HashPassword(null!, req.Password);
             }
 
+            string avatarPath = string.Empty;
+
             // 上傳檔案並取得檔案位置
-            if (req.FileBytes != null && !string.IsNullOrWhiteSpace(req.FileName))
+            int fileCount = files.Count;
+            if (fileCount > 0)
             {
-                await using var stream = new MemoryStream(req.FileBytes);
-                var avatarPath = await _memberDataUploadService.UploadAvatarAsync(req.MemberId, stream, req.FileName, Mode.Update, ct);
-                req.AvatarPath = avatarPath;
+                var f = files.First();
+                avatarPath = await _memberDataUploadService.UploadAvatarAsync(req.MemberId, f.Stream, f.FileName, Mode.Update, ct);
             }
 
             var now = DateTime.UtcNow;
@@ -79,7 +82,7 @@ namespace MyAlbum.Application.MemberAccount.implement
                 AccountId = req.AccountId,
                 Email = req.Email,
                 DisplayName = req.DisplayName,
-                AvatarPath = req.AvatarPath,
+                AvatarPath = !string.IsNullOrWhiteSpace(avatarPath) ? avatarPath : null,
                 Status = req.Status,
                 UpdatedAtUtc = now,
                 UpdateBy = operatorId

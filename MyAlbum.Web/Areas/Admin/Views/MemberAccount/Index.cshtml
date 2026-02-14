@@ -431,7 +431,6 @@
                         dialog.visible = false;
                         loadList();
                     } else {
-                        const file = form.file?.raw ?? form.file ?? null;
                         const fd = toFormData({
                               memberId: form.memberId,
                               accountId: form.accountId,
@@ -440,8 +439,12 @@
                               email: form.email,
                               status: form.status,
                               displayName: form.displayName,
-                              ...(form.file ? { file: form.file } : {})
                         });
+
+                        if (form.file) {
+                          fd.append("Files", form.file);
+                        }
+
                         const { data: ok } = await apiForm.put(`/${form.memberId}/${form.accountId}`, fd);
                         console.log(ok);
                         ElementPlus.ElMessage.success('更新成功');

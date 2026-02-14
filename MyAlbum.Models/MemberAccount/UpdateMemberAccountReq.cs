@@ -29,12 +29,6 @@ namespace MyAlbum.Models.MemberAccount
 
         public Status Status { get; set; } = Status.Active;
 
-        // 檔案用
-        public string? AvatarPath { get; set; }
-        // 檔案上傳用
-        public byte[]? FileBytes { get; set; }
-        public string? FileName { get; set; }
-
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
         {
             // 有輸入密碼才驗證

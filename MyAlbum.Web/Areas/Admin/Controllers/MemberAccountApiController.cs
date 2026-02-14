@@ -158,31 +158,74 @@ namespace MyAlbum.Web.Areas.Admin.Controllers
                 DisplayName = form.DisplayName,
                 Status = form.Status
             };
-            if (form.File is not null && form.File.Length > 0)
+
+            var files = form.Files?.Where(f => f is not null && f.Length > 0).ToList() ?? new List<IFormFile>();
+            var uploadFiles = new List<UploadFileStream>(files.Count);
+
+            if (files.Count > 0)
             {
-                const long maxSize = 2 * 1024 * 1024; // 2MB
-                if (form.File.Length > maxSize)
-                    return BadRequest("檔案過大，限制 2MB");
+                const int maxFiles = 10;
+                const long maxFileSize = 2 * 1024 * 1024;   // 單檔 2MB
+                const long maxTotalSize = 10 * 1024 * 1024; // 總量 10MB
+                var allowedExtensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+                {
+                    ".jpg", ".jpeg", ".png"
+                };
 
-                var allowedExtensions = new[] { ".jpg", ".jpeg", ".png" };
-                var ext = Path.GetExtension(form.File.FileName).ToLowerInvariant();
-                if (!allowedExtensions.Contains(ext))
-                    return BadRequest("僅允許 jpg / png 格式");
+                var allowedContentTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+                {
+                    "image/jpeg", "image/png"
+                };
 
-                var allowedContentTypes = new[] { "image/jpeg", "image/png" };
-                if (!allowedContentTypes.Contains(form.File.ContentType))
-                    return BadRequest("檔案格式不正確");
+                if (files.Count > maxFiles)
+                    return BadRequest($"最多允許上傳 {maxFiles} 個檔案");
 
-                await using var ms = new MemoryStream();
-                await form.File.CopyToAsync(ms, ct);
+                long totalSize = 0;
+                try
+                {
+                    foreach (var file in files)
+                    {
+                        totalSize += file.Length;
+                        if (totalSize > maxTotalSize)
+                            return BadRequest($"總上傳大小不可超過 {maxTotalSize / (1024 * 1024)}MB");
 
-                req.FileBytes = ms.ToArray();
-                req.FileName = form.File.FileName;
-                //req.ContentType = form.File.ContentType;
+                        if (file.Length > maxFileSize)
+                            return BadRequest($"單檔不可超過 {maxFileSize / (1024 * 1024)}MB");
+
+                        var ext = Path.GetExtension(file.FileName);
+                        if (string.IsNullOrWhiteSpace(ext) || !allowedExtensions.Contains(ext))
+                            return BadRequest($"不允許的副檔名：{ext}，僅允許 jpg/jpeg/png");
+
+                        if (!allowedContentTypes.Contains(file.ContentType))
+                            return BadRequest($"不允許的 ContentType：{file.ContentType}");
+
+                        var stream = file.OpenReadStream();
+
+                        uploadFiles.Add(new UploadFileStream
+                        {
+                            FileName = file.FileName,
+                            ContentType = file.ContentType,
+                            Length = file.Length,
+                            Stream = stream
+                        });
+                    }
+
+                    var id = await _update.UpdateMemberAccountAsync(req, uploadFiles, ct);
+                    return Ok(id);
+                }
+                finally
+                {
+                    foreach (var f in uploadFiles)
+                    {
+                        try { await f.Stream.DisposeAsync(); } catch { }
+                    }
+                }
             }
-
-            var ok = await _update.UpdateMemberAccountAsync(req, ct);
-            return Ok(ok);
+            else
+            {
+                var ok = await _update.UpdateMemberAccountAsync(req, uploadFiles, ct);
+                return Ok(ok);
+            }
         }
 
         // PATCH /Admin/Api/MemberAccountApi/{id}/status
