@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using MyAlbum.Application.Member;
+using MyAlbum.Application.Uploads;
 using MyAlbum.Domain;
 using MyAlbum.Domain.EmployeeAccount;
 using MyAlbum.Domain.MemberAccount;
@@ -24,18 +25,18 @@ namespace MyAlbum.Application.MemberAccount.implement
         private readonly IPasswordHasher<AccountDto> _hasher;
         private readonly ICurrentUserAccessor _currentUser;
         private readonly IMemberAccountCreateRepository _memberAccountCreateRepository;
-        private readonly IMemberDataUploadService _memberDataUploadService;
+        private readonly IFileUploadManagerService _fileUploadManagerService;
         public MemberAccountCreateService(
            IAlbumDbContextFactory factory,
            IPasswordHasher<AccountDto> hasher,
            ICurrentUserAccessor currentUser,
            IMemberAccountCreateRepository memberAccountCreateRepository,
-           IMemberDataUploadService memberDataUploadService) : base(factory)
+           IFileUploadManagerService fileUploadManagerService) : base(factory)
         {
             _hasher = hasher;
             _currentUser = currentUser;
             _memberAccountCreateRepository = memberAccountCreateRepository;
-            _memberDataUploadService = memberDataUploadService;
+            _fileUploadManagerService = fileUploadManagerService;
         }
 
         public async Task<Guid> CreateMemberWithAccountAsync(CreateMemberReq req, IReadOnlyList<UploadFileStream> files, CancellationToken ct = default)
@@ -46,8 +47,30 @@ namespace MyAlbum.Application.MemberAccount.implement
             Guid accountId = Guid.NewGuid();
             Guid memberId = Guid.NewGuid();
 
-            DateTime now = DateTime.UtcNow;
+            // 上傳檔案並取得檔案位置
+            Dictionary<string, string> dict = new Dictionary<string, string>();
+            int fileCount = files.Count;
+            if (fileCount > 0)
+            {
+                UploadModel uploadModel = new UploadModel()
+                {
+                    Id = memberId,
+                    ColumnType = 1,
+                    EntityUploadType = EntityUploadType.Member
+                };
+                dict = await _fileUploadManagerService.FileUpload(uploadModel, files, ct);
+            }
+            string avatarPath = string.Empty;
+            if (dict.Count > 0)
+            {
+                var chkFile = files.First();
+                if (dict.TryGetValue(chkFile.FileName, out var name))
+                {
+                    avatarPath = name;
+                }
+            }
 
+            DateTime now = DateTime.UtcNow;
             AccountCreateDto accountCreateDto = new AccountCreateDto
             {
                 AccountId = accountId,
@@ -61,21 +84,13 @@ namespace MyAlbum.Application.MemberAccount.implement
                 MemberId = memberId,
                 AccountId = accountCreateDto.AccountId,
                 Email = req.Email,
+                AvatarPath = !string.IsNullOrWhiteSpace(avatarPath) ? avatarPath : null,
                 DisplayName = req.DisplayName,
                 CreatedAtUtc = now,
                 CreatedBy = operatorId
             };
 
             var id = await _memberAccountCreateRepository.CreateMemberWithAccountAsync(accountCreateDto, memberCreateDto, ct);
-
-            // 上傳檔案並取得檔案位置
-            int fileCount = files.Count;
-            if (fileCount > 0)
-            {
-                var f = files.First();
-                var avatarPath = await _memberDataUploadService.UploadAvatarAsync(id, f.Stream, f.FileName, Mode.Create, ct);
-            }
-
             return id;
         }
     }

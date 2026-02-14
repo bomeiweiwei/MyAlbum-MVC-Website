@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using MyAlbum.Application.Member;
+using MyAlbum.Application.Uploads;
 using MyAlbum.Domain;
 using MyAlbum.Domain.Account;
 using MyAlbum.Domain.Employee;
@@ -27,7 +28,7 @@ namespace MyAlbum.Application.MemberAccount.implement
         private readonly ICurrentUserAccessor _currentUser;
         private readonly IAccountUpdateRepository _accountUpdateRepository;
         private readonly IMemberUpdateRepository _memberUpdateRepository;
-        private readonly IMemberDataUploadService _memberDataUploadService;
+        private readonly IFileUploadManagerService _fileUploadManagerService;
         public MemberAccountUpdateService(
            IAlbumDbContextFactory factory,
            IExecutionStrategyFactory strategyFactory,
@@ -36,14 +37,16 @@ namespace MyAlbum.Application.MemberAccount.implement
            IEmployeeAccountCreateRepository employeeAccountCreateRepository,
            IAccountUpdateRepository accountUpdateRepository,
            IMemberUpdateRepository memberUpdateRepository,
-           IMemberDataUploadService memberDataUploadService) : base(factory)
+           IMemberAvatarUploadService memberDataUploadService,
+           IFileUploadManagerService fileUploadManagerService
+           ) : base(factory)
         {
             _strategyFactory = strategyFactory;
             _hasher = hasher;
             _currentUser = currentUser;
             _accountUpdateRepository = accountUpdateRepository;
             _memberUpdateRepository = memberUpdateRepository;
-            _memberDataUploadService = memberDataUploadService;
+            _fileUploadManagerService = fileUploadManagerService;
         }
 
         public async Task<bool> UpdateMemberAccountAsync(UpdateMemberAccountReq req, IReadOnlyList<UploadFileStream> files, CancellationToken ct = default)
@@ -56,14 +59,27 @@ namespace MyAlbum.Application.MemberAccount.implement
                 passwordHash = _hasher.HashPassword(null!, req.Password);
             }
 
-            string avatarPath = string.Empty;
-
             // 上傳檔案並取得檔案位置
+            Dictionary<string, string> dict = new Dictionary<string, string>();
             int fileCount = files.Count;
             if (fileCount > 0)
             {
-                var f = files.First();
-                avatarPath = await _memberDataUploadService.UploadAvatarAsync(req.MemberId, f.Stream, f.FileName, Mode.Update, ct);
+                UploadModel uploadModel = new UploadModel()
+                {
+                    Id = req.MemberId,
+                    ColumnType = 1,
+                    EntityUploadType = EntityUploadType.Member
+                };
+                dict = await _fileUploadManagerService.FileUpload(uploadModel, files, ct);
+            }
+            string avatarPath = string.Empty;
+            if (dict.Count > 0)
+            {
+                var chkFile = files.First();
+                if (dict.TryGetValue(chkFile.FileName, out var name))
+                {
+                    avatarPath = name;
+                }
             }
 
             var now = DateTime.UtcNow;

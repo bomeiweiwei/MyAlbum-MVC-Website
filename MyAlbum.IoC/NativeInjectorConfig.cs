@@ -4,6 +4,8 @@ using Microsoft.Extensions.DependencyInjection;
 using MyAlbum.Application;
 using MyAlbum.Application.Identity;
 using MyAlbum.Application.Identity.implement;
+using MyAlbum.Application.Uploads;
+using MyAlbum.Application.Uploads.implement;
 using MyAlbum.Domain;
 using MyAlbum.Models.Identity;
 using MyAlbum.Repository;
@@ -25,6 +27,9 @@ namespace MyAlbum.IoC
             // 多實作介面：ILoginService（會注入到 IEnumerable<ILoginService>）
             services.AddScoped<ILoginService, AdminUserLoginService>();
             services.AddScoped<ILoginService, MemberUserLoginService>();
+
+            services.AddScoped<IFileUploadManagerService, FileUploadManagerService>();
+            services.AddScoped<IFileUploadService, MemberUploadService>();
 
             // 固定線
             services.AddScoped<IAlbumDbContextFactory, AlbumDbContextFactory>();

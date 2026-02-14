@@ -80,6 +80,7 @@ namespace MyAlbum.Repository.Business.MemberAccount
                         join account in db.Accounts.AsNoTracking() on member.AccountId equals account.AccountId
                         where
                             account.AccountType == (int)AccountType.Member
+                        orderby member.CreatedAtUtc descending
                         select new MemberAccountDto()
                         {
                             MemberId = member.MemberId,
