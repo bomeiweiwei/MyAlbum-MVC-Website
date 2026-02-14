@@ -2,6 +2,7 @@
 using MyAlbum.Domain;
 using MyAlbum.Domain.Category;
 using MyAlbum.Infrastructure.EF.Data;
+using MyAlbum.Models.Base;
 using MyAlbum.Models.Category;
 using MyAlbum.Models.Identity;
 using MyAlbum.Shared.Enums;
@@ -24,8 +25,7 @@ namespace MyAlbum.Repository.Business.Category
 
             var query = from cat in db.AlbumCategories.AsNoTracking()
                         where
-                            cat.AlbumCategoryId == req.AlbumCategoryId &&
-                            cat.Status == (int)Status.Active
+                            cat.AlbumCategoryId == req.AlbumCategoryId
                         select new AlbumCategoryDto()
                         {
                             AlbumCategoryId = cat.AlbumCategoryId,
@@ -43,15 +43,14 @@ namespace MyAlbum.Repository.Business.Category
             return result;
         }
 
-        public async Task<List<AlbumCategoryDto>> GetAlbumCategoryListAsync(GetAlbumCategoryReq req, CancellationToken ct = default)
+        public async Task<ResponseBase<List<AlbumCategoryDto>>> GetAlbumCategoryListAsync(PageRequestBase<GetAlbumCategoryListReq> req, CancellationToken ct = default)
         {
-            var result = new List<AlbumCategoryDto>();
+            var result = new ResponseBase<List<AlbumCategoryDto>>();
             using var ctx = _factory.Create(ConnectionMode.Slave);
             var db = ctx.AsDbContext<MyAlbumContext>();
 
             var query = from cat in db.AlbumCategories.AsNoTracking()
-                        where
-                            cat.Status == (int)Status.Active
+                        orderby cat.SortOrder
                         select new AlbumCategoryDto()
                         {
                             AlbumCategoryId = cat.AlbumCategoryId,
@@ -60,12 +59,17 @@ namespace MyAlbum.Repository.Business.Category
                             Status = (Status)cat.Status
                         };
 
-            if (!string.IsNullOrEmpty(req.CategoryName))
+            if (!string.IsNullOrEmpty(req.Data.CategoryName))
             {
-                query = query.Where(x => x.CategoryName == req.CategoryName);
+                query = query.Where(x => x.CategoryName.Contains(req.Data.CategoryName));
+            }
+            if (req.Data.Status.HasValue)
+            {
+                query = query.Where(m => m.Status == req.Data.Status);
             }
 
-            result = await query.ToListAsync(ct);
+            result.Count = await query.CountAsync();
+            result.Data = await query.Skip((req.pageIndex - 1) * req.pageSize).Take(req.pageSize).AsNoTracking().ToListAsync(ct);
 
             return result;
         }

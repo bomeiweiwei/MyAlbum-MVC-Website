@@ -9,6 +9,7 @@ namespace MyAlbum.Models.Category
     {
         public Guid AlbumCategoryId { get; set; }
         public Status Status { get; set; }
+        public DateTime UpdatedAtUtc { get; set; } = DateTime.UtcNow;
         public Guid UpdatedBy { get; set; }
     }
 }
