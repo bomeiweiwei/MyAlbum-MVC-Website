@@ -1,4 +1,5 @@
-﻿using MyAlbum.Application.Member;
+﻿using MyAlbum.Application.Album;
+using MyAlbum.Application.Uploads;
 using MyAlbum.Domain;
 using MyAlbum.Models.UploadFiles;
 using MyAlbum.Shared.Enums;
@@ -6,16 +7,17 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace MyAlbum.Application.Uploads.implement
+namespace MyAlbum.Application.Album.implement
 {
-    public class MemberUploadService : BaseService, IFileUploadService
+    public class AlbumUploadService : BaseService, IFileUploadService
     {
-        public EntityUploadType entityUploadType => EntityUploadType.Member;
-
-        private readonly IMemberAvatarUploadService _memberAvatarUploadService;
-        public MemberUploadService(IAlbumDbContextFactory factory, IMemberAvatarUploadService memberAvatarUploadService) : base(factory)
+        public EntityUploadType entityUploadType => EntityUploadType.Album;
+        private readonly IAlbumCoverUploadService _albumCoverUploadService;
+        public AlbumUploadService(
+            IAlbumDbContextFactory factory,
+            IAlbumCoverUploadService albumCoverUploadService) :base(factory)
         {
-            _memberAvatarUploadService = memberAvatarUploadService;
+            _albumCoverUploadService = albumCoverUploadService;
         }
 
         public async Task<Dictionary<string, string>> Upload(UploadModel model, IReadOnlyList<UploadFileStream> files, CancellationToken ct = default)
@@ -27,7 +29,7 @@ namespace MyAlbum.Application.Uploads.implement
             {
                 foreach (var file in files)
                 {
-                    string path = await _memberAvatarUploadService.UploadAvatarAsync(model, file.Stream, file.FileName, ct);
+                    string path = await _albumCoverUploadService.UploadCoverPathAsync(model, file.Stream, file.FileName, ct);
                     dict.Add(file.FileName, path);
                 }
             }

@@ -1,5 +1,6 @@
 ﻿using MyAlbum.Application.Member;
 using MyAlbum.Application.Member.implement;
+using MyAlbum.Application.Uploads;
 using MyAlbum.Domain;
 using MyAlbum.Domain.Album;
 using MyAlbum.Domain.Category;
@@ -19,23 +20,46 @@ namespace MyAlbum.Application.Album.implement
     {
         private readonly ICurrentUserAccessor _currentUser;
         private readonly IAlbumUpdateRepository _albumUpdateRepository;
-        private readonly IAlbumDataUploadService _albumDataUploadService;
+        private readonly IFileUploadManagerService _fileUploadManagerService;
         public AlbumUpdateService(
             IAlbumDbContextFactory factory,
             ICurrentUserAccessor currentUser,
             IAlbumUpdateRepository albumUpdateRepository,
-            IAlbumDataUploadService albumDataUploadService) : base(factory)
+            IFileUploadManagerService fileUploadManagerService) : base(factory)
         {
             _albumUpdateRepository = albumUpdateRepository;
             _currentUser = currentUser;
-            _albumDataUploadService = albumDataUploadService;
+            _fileUploadManagerService = fileUploadManagerService;
         }
 
         public async Task<bool> UpdateAlbumAsync(UpdateAlbumReq req, IReadOnlyList<UploadFileStream> files, CancellationToken ct = default)
         {
             var operatorId = _currentUser.GetRequiredAccountId();
             var type = _currentUser.GetRequiredAccountType();
-            
+
+            // 上傳檔案並取得檔案位置
+            Dictionary<string, string> dict = new Dictionary<string, string>();
+            int fileCount = files.Count;
+            if (fileCount > 0)
+            {
+                UploadModel uploadModel = new UploadModel()
+                {
+                    Id = req.AlbumId,
+                    ColumnType = 1,
+                    EntityUploadType = EntityUploadType.Album
+                };
+                dict = await _fileUploadManagerService.FileUpload(uploadModel, files, ct);
+            }
+            string coverPath = string.Empty;
+            if (dict.Count > 0)
+            {
+                var chkFile = files.First();
+                if (dict.TryGetValue(chkFile.FileName, out var name))
+                {
+                    coverPath = name;
+                }
+            }
+
             AlbumUpdateDto dto = new AlbumUpdateDto
             {
                 AlbumId = req.AlbumId,
@@ -43,6 +67,7 @@ namespace MyAlbum.Application.Album.implement
                 OwnerAccountId = req.OwnerAccountId,
                 Title = req.Title,
                 Description = req.Description,
+                CoverPath = !string.IsNullOrWhiteSpace(coverPath) ? coverPath : null,
                 Status = req.Status,
                 UpdatedAtUtc = DateTime.UtcNow,
                 UpdatedBy = operatorId
@@ -59,14 +84,6 @@ namespace MyAlbum.Application.Album.implement
             }
 
             var result = await _albumUpdateRepository.UpdateAlbumAsync(dto, ct);
-
-            // 上傳檔案並取得檔案位置
-            int fileCount = files.Count;
-            if (fileCount > 0)
-            {
-                var f = files.First();
-                var coverPath = await _albumDataUploadService.UploadCoverPathAsync(req.AlbumId, f.Stream, f.FileName, Mode.Update, ct);
-            }
             return result;
         }
 

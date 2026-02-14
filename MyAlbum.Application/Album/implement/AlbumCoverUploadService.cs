@@ -2,6 +2,7 @@
 using MyAlbum.Domain;
 using MyAlbum.Domain.Album;
 using MyAlbum.Domain.Member;
+using MyAlbum.Models.UploadFiles;
 using MyAlbum.Shared.Enums;
 using MyAlbum.Shared.Extensions;
 using MyAlbum.Shared.Idenyity;
@@ -11,27 +12,20 @@ using System.Text;
 
 namespace MyAlbum.Application.Album.implement
 {
-    public class AlbumDataUploadService : BaseService, IAlbumDataUploadService
+    public class AlbumCoverUploadService : BaseService, IAlbumCoverUploadService
     {
         private readonly IUploadPathService _paths;
-        private readonly ICurrentUserAccessor _currentUser;
-        private readonly IAlbumUpdateRepository _albumUpdateRepository;
-        public AlbumDataUploadService(
+        public AlbumCoverUploadService(
            IAlbumDbContextFactory factory,
-           IUploadPathService paths,
-           ICurrentUserAccessor currentUser,
-           IAlbumUpdateRepository albumUpdateRepository
+           IUploadPathService paths
            ) : base(factory)
         {
-            _currentUser = currentUser;
             _paths = paths;
-            _albumUpdateRepository = albumUpdateRepository;
         }
 
-        public async Task<string> UploadCoverPathAsync(Guid albumId, Stream fileStream, string originalFileName, Mode mode, CancellationToken ct)
+        public async Task<string> UploadCoverPathAsync(UploadModel model, Stream fileStream, string originalFileName, CancellationToken ct)
         {
-            var operatorId = _currentUser.GetRequiredAccountId();
-            var fileKey = _paths.BuildAlbumCoverPathFileKey(albumId, originalFileName);
+            var fileKey = _paths.BuildAlbumCoverPathFileKey(model.Id, originalFileName);
 
             var physicalPath = _paths.ToPhysicalPath(fileKey);
             Directory.CreateDirectory(Path.GetDirectoryName(physicalPath)!);
@@ -42,11 +36,8 @@ namespace MyAlbum.Application.Album.implement
                 {
                     await fileStream.CopyToAsync(outStream, ct);
                 }
-                await _albumUpdateRepository.UpdateAlbumCoverPathAsync(albumId, fileKey, operatorId, ct);
-                if (mode == Mode.Upload)
-                    return _paths.ToPublicUrl(fileKey);
-                else
-                    return fileKey;
+
+                return fileKey;
             }
             catch
             {
