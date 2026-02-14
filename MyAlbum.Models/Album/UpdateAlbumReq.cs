@@ -22,9 +22,5 @@ namespace MyAlbum.Models.Album
         public string? Description { get; set; }
 
         public Status Status { get; set; } = Status.Active;
-
-        // 檔案上傳用
-        public byte[]? FileBytes { get; set; }
-        public string? FileName { get; set; }
     }
 }

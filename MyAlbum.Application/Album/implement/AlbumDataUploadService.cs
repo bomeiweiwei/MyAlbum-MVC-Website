@@ -43,7 +43,10 @@ namespace MyAlbum.Application.Album.implement
                     await fileStream.CopyToAsync(outStream, ct);
                 }
                 await _albumUpdateRepository.UpdateAlbumCoverPathAsync(albumId, fileKey, operatorId, ct);
-                return _paths.ToPublicUrl(fileKey);
+                if (mode == Mode.Upload)
+                    return _paths.ToPublicUrl(fileKey);
+                else
+                    return fileKey;
             }
             catch
             {

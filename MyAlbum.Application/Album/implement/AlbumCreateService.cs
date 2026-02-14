@@ -3,6 +3,7 @@ using MyAlbum.Domain.Album;
 using MyAlbum.Domain.Category;
 using MyAlbum.Models.Album;
 using MyAlbum.Models.Category;
+using MyAlbum.Models.UploadFiles;
 using MyAlbum.Shared.Enums;
 using MyAlbum.Shared.Extensions;
 using MyAlbum.Shared.Idenyity;
@@ -28,7 +29,7 @@ namespace MyAlbum.Application.Album.implement
             _albumDataUploadService = albumDataUploadService;
         }
 
-        public async Task<Guid> CreateAlbumAsync(CreateAlbumReq req, CancellationToken ct = default)
+        public async Task<Guid> CreateAlbumAsync(CreateAlbumReq req, IReadOnlyList<UploadFileStream> files, CancellationToken ct = default)
         {
             var operatorId = _currentUser.GetRequiredAccountId();
 
@@ -47,12 +48,11 @@ namespace MyAlbum.Application.Album.implement
             };
 
             var id = await _albumCreateRepository.CreateAlbumAsync(dto, ct);
+
             // 上傳檔案並取得檔案位置
-            if (req.FileBytes != null && !string.IsNullOrWhiteSpace(req.FileName))
-            {
-                await using var stream = new MemoryStream(req.FileBytes);
-                var path = await _albumDataUploadService.UploadCoverPathAsync(id, stream, req.FileName, Mode.Create, ct);
-            }
+            var f = files.First();
+            var coverPath = await _albumDataUploadService.UploadCoverPathAsync(id, f.Stream, f.FileName, Mode.Create, ct);
+
             return id;
         }
     }
