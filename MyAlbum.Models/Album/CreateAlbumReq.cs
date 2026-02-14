@@ -19,9 +19,5 @@ namespace MyAlbum.Models.Album
         public string Title { get; set; }
 
         public string? Description { get; set; }
-
-        // 檔案上傳用
-        public byte[]? FileBytes { get; set; }
-        public string? FileName { get; set; }
     }
 }
