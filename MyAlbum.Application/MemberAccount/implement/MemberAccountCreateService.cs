@@ -8,6 +8,7 @@ using MyAlbum.Models.Employee;
 using MyAlbum.Models.Identity;
 using MyAlbum.Models.Member;
 using MyAlbum.Models.MemberAccount;
+using MyAlbum.Models.UploadFiles;
 using MyAlbum.Shared.Enums;
 using MyAlbum.Shared.Extensions;
 using MyAlbum.Shared.Idenyity;
@@ -37,20 +38,13 @@ namespace MyAlbum.Application.MemberAccount.implement
             _memberDataUploadService = memberDataUploadService;
         }
 
-        public async Task<Guid> CreateMemberWithAccountAsync(CreateMemberReq req, CancellationToken ct = default)
+        public async Task<Guid> CreateMemberWithAccountAsync(CreateMemberReq req, IReadOnlyList<UploadFileStream> files, CancellationToken ct = default)
         {
             var operatorId = _currentUser.GetRequiredAccountId();
             var passwordHash = _hasher.HashPassword(null!, req.Password);
 
             Guid accountId = Guid.NewGuid();
             Guid memberId = Guid.NewGuid();
-            // 上傳檔案並取得檔案位置
-            if (req.FileBytes != null && !string.IsNullOrWhiteSpace(req.FileName))
-            {
-                await using var stream = new MemoryStream(req.FileBytes);
-                var avatarPath = await _memberDataUploadService.UploadAvatarAsync(memberId, stream, req.FileName, Mode.Create, ct);
-                req.AvatarPath = avatarPath;
-            }
 
             DateTime now = DateTime.UtcNow;
 
@@ -68,12 +62,21 @@ namespace MyAlbum.Application.MemberAccount.implement
                 AccountId = accountCreateDto.AccountId,
                 Email = req.Email,
                 DisplayName = req.DisplayName,
-                AvatarPath = req.AvatarPath,
                 CreatedAtUtc = now,
                 CreatedBy = operatorId
             };
 
-            return await _memberAccountCreateRepository.CreateMemberWithAccountAsync(accountCreateDto, memberCreateDto, ct);
+            var id = await _memberAccountCreateRepository.CreateMemberWithAccountAsync(accountCreateDto, memberCreateDto, ct);
+
+            // 上傳檔案並取得檔案位置
+            int fileCount = files.Count;
+            if (fileCount > 0)
+            {
+                var f = files.First();
+                var avatarPath = await _memberDataUploadService.UploadAvatarAsync(id, f.Stream, f.FileName, Mode.Create, ct);
+            }
+
+            return id;
         }
     }
 }

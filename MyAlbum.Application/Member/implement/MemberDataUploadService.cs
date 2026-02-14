@@ -41,11 +41,9 @@ namespace MyAlbum.Application.Member.implement
                 {
                     await fileStream.CopyToAsync(outStream, ct);
                 }
+                await _memberUpdateRepository.UpdateMemberAvatarPathAsync(memberId, fileKey, operatorId, ct);
                 if (mode == Mode.Upload)
-                {
-                    await _memberUpdateRepository.UpdateMemberAvatarPathAsync(memberId, fileKey, operatorId, ct);
                     return _paths.ToPublicUrl(fileKey);
-                }
                 else
                     return fileKey;
             }

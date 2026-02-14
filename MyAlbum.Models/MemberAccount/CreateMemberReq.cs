@@ -14,8 +14,5 @@ namespace MyAlbum.Models.MemberAccount
 
         // 檔案用
         public string? AvatarPath { get; set; }
-        // 檔案上傳用
-        public byte[]? FileBytes { get; set; }
-        public string? FileName { get; set; }
     }
 }
