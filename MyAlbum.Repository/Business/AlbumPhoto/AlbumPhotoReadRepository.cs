@@ -3,6 +3,7 @@ using MyAlbum.Domain;
 using MyAlbum.Domain.AlbumPhoto;
 using MyAlbum.Infrastructure.EF.Data;
 using MyAlbum.Models.AlbumPhoto;
+using MyAlbum.Models.Base;
 using MyAlbum.Shared.Enums;
 using System;
 using System.Collections.Generic;
@@ -24,8 +25,11 @@ namespace MyAlbum.Repository.Business.AlbumPhoto
 
             var query =
                 from main in db.AlbumPhotos.AsNoTracking()
+                join album in db.Albums.AsNoTracking() on main.AlbumId equals album.AlbumId into photoGroup
+                from album in photoGroup.DefaultIfEmpty()
                 select new AlbumPhotoDto
                 {
+                    Title = album.Title,
                     AlbumPhotoId = main.AlbumPhotoId,
                     AlbumId = main.AlbumId,
                     FilePath = main.FilePath,
@@ -67,17 +71,20 @@ namespace MyAlbum.Repository.Business.AlbumPhoto
             return result;
         }
 
-        public async Task<List<AlbumPhotoDto>> GetAlbumPhotoListAsync(GetAlbumPhotoReq req, CancellationToken ct = default)
+        public async Task<ResponseBase<List<AlbumPhotoDto>>> GetAlbumPhotoListAsync(PageRequestBase<GetAlbumPhotoReq> req, CancellationToken ct = default)
         {
-            var result = new List<AlbumPhotoDto>();
+            var result = new ResponseBase<List<AlbumPhotoDto>>();
 
             using var ctx = _factory.Create(ConnectionMode.Slave);
             var db = ctx.AsDbContext<MyAlbumContext>();
 
             var query =
                 from main in db.AlbumPhotos.AsNoTracking()
+                join album in db.Albums.AsNoTracking() on main.AlbumId equals album.AlbumId into photoGroup
+                from album in photoGroup.DefaultIfEmpty()
                 select new AlbumPhotoDto
                 {
+                    Title = album.Title,
                     AlbumPhotoId = main.AlbumPhotoId,
                     AlbumId = main.AlbumId,
                     FilePath = main.FilePath,
@@ -93,13 +100,13 @@ namespace MyAlbum.Repository.Business.AlbumPhoto
                     UpdatedBy = main.UpdatedBy
                 };
 
-            if (req.AlbumPhotoId.HasValue) 
+            if (req.Data.AlbumPhotoId.HasValue) 
             {
-                query = query.Where(x => x.AlbumPhotoId == req.AlbumPhotoId.Value);
+                query = query.Where(x => x.AlbumPhotoId == req.Data.AlbumPhotoId.Value);
             }
-            if (req.AlbumId.HasValue) 
+            if (req.Data.AlbumId.HasValue) 
             { 
-                query = query.Where(x => x.AlbumId == req.AlbumId.Value);
+                query = query.Where(x => x.AlbumId == req.Data.AlbumId.Value);
             }
 
             //if (!string.IsNullOrWhiteSpace(req.FilePath)) { query = query.Where(m => m.FilePath.Contains(req.FilePath)); }
@@ -110,12 +117,14 @@ namespace MyAlbum.Repository.Business.AlbumPhoto
             //if (req.SortOrder.HasValue) { query = query.Where(x => x.SortOrder == req.SortOrder.Value); }
             //if (req.CommentNum.HasValue) { query = query.Where(x => x.CommentNum == req.CommentNum.Value); }
 
-            if (req.Status.HasValue) 
+            if (req.Data.Status.HasValue) 
             { 
-                query = query.Where(x => x.Status == req.Status.Value); 
+                query = query.Where(x => x.Status == req.Data.Status.Value); 
             }
 
-            result = await query.ToListAsync(ct);
+            result.Count = await query.CountAsync();
+            result.Data = await query.Skip((req.pageIndex - 1) * req.pageSize).Take(req.pageSize).AsNoTracking().ToListAsync(ct);
+
             return result;
         }
     }

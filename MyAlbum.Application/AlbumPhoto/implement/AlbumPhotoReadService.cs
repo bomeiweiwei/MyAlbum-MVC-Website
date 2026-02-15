@@ -2,6 +2,7 @@
 using MyAlbum.Domain.AlbumPhoto;
 using MyAlbum.Domain.Category;
 using MyAlbum.Models.AlbumPhoto;
+using MyAlbum.Models.Base;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -23,7 +24,7 @@ namespace MyAlbum.Application.AlbumPhoto.implement
             return await _albumPhotoReadRepository.GetAlbumPhotoAsync(req, ct);
         }
 
-        public async Task<List<AlbumPhotoDto>> GetAlbumPhotoListAsync(GetAlbumPhotoReq req, CancellationToken ct = default)
+        public async Task<ResponseBase<List<AlbumPhotoDto>>> GetAlbumPhotoListAsync(PageRequestBase<GetAlbumPhotoReq> req, CancellationToken ct = default)
         {
             return await _albumPhotoReadRepository.GetAlbumPhotoListAsync(req, ct);
         }

@@ -11,5 +11,8 @@ namespace MyAlbum.Models.AlbumPhoto
         public Status Status { get; set; }
         public Guid UpdatedBy { get; set; }
         public DateTime UpdatedAtUtc { get; set; }= DateTime.UtcNow;
+
+        public bool UpdateByMember { get; set; } = true;
+        public Guid OwnerAccountId { get; set; }
     }
 }

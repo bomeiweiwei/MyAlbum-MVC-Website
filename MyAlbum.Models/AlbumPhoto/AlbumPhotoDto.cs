@@ -25,5 +25,7 @@ namespace MyAlbum.Models.AlbumPhoto
         public DateTime UpdatedAtUtc { get; set; }
         public Guid CreatedBy { get; set; }
         public Guid UpdatedBy { get; set; }
+
+        public string Title { get; set; }
     }
 }

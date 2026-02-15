@@ -7,6 +7,6 @@ namespace MyAlbum.Domain.AlbumPhoto
 {
     public interface IAlbumPhotoCreateRepository
     {
-        Task<Guid> CreateAlbumPhotoAsync(AlbumPhotoCreateDto dto, CancellationToken ct = default);
+        Task<Guid> CreateAlbumPhotoAsync(List<AlbumPhotoCreateDto> list, CancellationToken ct = default);
     }
 }
