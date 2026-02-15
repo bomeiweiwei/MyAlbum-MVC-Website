@@ -10,7 +10,7 @@ namespace MyAlbum.Models.AlbumPhoto
         public Guid AlbumPhotoId { get; set; }
         public Guid AlbumId { get; set; }
 
-        public string FilePath { get; set; } = null!;
+        public string PublicPathUrl { get; set; } = null!;
         public string? OriginalFileName { get; set; }
         public string? ContentType { get; set; }
 
