@@ -55,6 +55,14 @@ namespace MyAlbum.Repository.Business.AlbumComment
             if (req.EndReleaseTimeUtc.HasValue) { query = query.Where(m => m.ReleaseTimeUtc <= req.EndReleaseTimeUtc.Value); }
 
             result = await query.FirstOrDefaultAsync(ct);
+
+            if (result != null)
+            {
+                result.ReleaseTimeUtc = DateTime.SpecifyKind(result.ReleaseTimeUtc, DateTimeKind.Utc);
+                result.CreatedAtUtc = DateTime.SpecifyKind(result.CreatedAtUtc, DateTimeKind.Utc);
+                result.UpdatedAtUtc = DateTime.SpecifyKind(result.UpdatedAtUtc, DateTimeKind.Utc);
+            }
+
             return result;
         }
 
