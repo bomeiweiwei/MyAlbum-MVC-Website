@@ -12,5 +12,7 @@ namespace MyAlbum.Application.Album
         Task<AlbumDto?> GetAlbumAsync(GetAlbumReq req, CancellationToken ct = default);
 
         Task<ResponseBase<List<AlbumDto>>> GetAlbumListAsync(PageRequestBase<GetAlbumListReq> req, CancellationToken ct = default);
+
+        Task<List<AlbumDto>> GetAlbumListItemAsync(GetAlbumListReq req, CancellationToken ct = default);
     }
 }

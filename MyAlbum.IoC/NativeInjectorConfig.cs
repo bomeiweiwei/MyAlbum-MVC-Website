@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using MyAlbum.Application;
 using MyAlbum.Application.Album.implement;
+using MyAlbum.Application.AlbumPhoto.implement;
 using MyAlbum.Application.Identity;
 using MyAlbum.Application.Identity.implement;
 using MyAlbum.Application.Member.implement;
@@ -33,6 +34,7 @@ namespace MyAlbum.IoC
             services.AddScoped<IFileUploadManagerService, FileUploadManagerService>();
             services.AddScoped<IFileUploadService, MemberUploadService>();
             services.AddScoped<IFileUploadService, AlbumUploadService>();
+            services.AddScoped<IFileUploadService, AlbumPhotoUploadService>();
 
             // 固定線
             services.AddScoped<IAlbumDbContextFactory, AlbumDbContextFactory>();

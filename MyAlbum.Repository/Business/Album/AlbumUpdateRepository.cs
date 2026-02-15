@@ -38,7 +38,7 @@ namespace MyAlbum.Repository.Business.Album
                     data.OwnerAccountId = dto.OwnerAccountId;
                     data.Title = dto.Title;
                     data.Description = dto.Description;
-                    data.CoverPath = dto.CoverPath;
+                    data.CoverPath = dto.CoverPath ?? data.CoverPath;
                     data.Status = (byte)dto.Status;
                     data.UpdatedBy = dto.UpdatedBy;
                     data.UpdatedAtUtc = dto.UpdatedAtUtc;

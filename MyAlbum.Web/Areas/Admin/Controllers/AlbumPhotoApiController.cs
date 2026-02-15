@@ -2,15 +2,13 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using MyAlbum.Application.Album;
-using MyAlbum.Application.MemberAccount;
-using MyAlbum.Infrastructure.EF.Models;
+using MyAlbum.Application.AlbumPhoto;
 using MyAlbum.Models.Album;
+using MyAlbum.Models.AlbumPhoto;
 using MyAlbum.Models.Base;
 using MyAlbum.Models.Category;
-using MyAlbum.Models.MemberAccount;
 using MyAlbum.Models.UploadFiles;
-using MyAlbum.Web.Models.Album;
-using MyAlbum.Web.Models.MemberAccount;
+using MyAlbum.Web.Models.AlbumPhoto;
 
 namespace MyAlbum.Web.Areas.Admin.Controllers
 {
@@ -18,58 +16,50 @@ namespace MyAlbum.Web.Areas.Admin.Controllers
     [Route("Admin/Api/[controller]")]
     [ApiController]
     [Authorize(AuthenticationSchemes = "AdminAuth")]
-    public class AlbumApiController : ControllerBase
+    public class AlbumPhotoApiController : ControllerBase
     {
-        private readonly IAlbumReadService _read;
-        private readonly IAlbumCreateService _create;
-        private readonly IAlbumUpdateService _update;
-        public AlbumApiController(
-            IAlbumReadService read,
-            IAlbumCreateService create,
-            IAlbumUpdateService update)
+        private readonly IAlbumPhotoReadService _read;
+        private readonly IAlbumPhotoCreateService _create;
+        private readonly IAlbumPhotoUpdateService _update;
+        public AlbumPhotoApiController(
+            IAlbumPhotoReadService read,
+            IAlbumPhotoCreateService create,
+            IAlbumPhotoUpdateService update)
         {
             _read = read;
             _create = create;
             _update = update;
         }
-        // /Admin/Api/AlbumApi?pageIndex=1&pageSize=10
-        // /Admin/Api/AlbumApi?pageIndex=1&pageSize=10&Data.Title=Te&Data.Status=1
+
         [HttpGet]
-        public async Task<ActionResult<ResponseBase<List<AlbumDto>>>> List([FromQuery] PageRequestBase<GetAlbumListReq> req, CancellationToken ct = default)
+        public async Task<ActionResult<ResponseBase<List<AlbumPhotoDto>>>> List([FromQuery] PageRequestBase<GetAlbumPhotoReq> req, CancellationToken ct = default)
         {
-            var result = await _read.GetAlbumListAsync(req, ct);
+            var result = await _read.GetAlbumPhotoListAsync(req, ct);
             return Ok(result);
         }
 
-        [HttpGet("items")]
-        public async Task<ActionResult<List<AlbumCategoryDto>>> GetItemListAsync([FromQuery] GetAlbumListReq req, CancellationToken ct = default)
+        // GET /Admin/Api/AlbumCategoriesApi/{id}
+        [HttpGet("{albumPhotoId:guid}/{albumId:guid}")]
+        public async Task<ActionResult<AlbumPhotoDto>> GetOne([FromRoute] Guid albumPhotoId, [FromRoute] Guid albumId, CancellationToken ct)
         {
-            var result = await _read.GetAlbumListItemAsync(req, ct);
-            return Ok(result);
-        }
-
-        [HttpGet("{albumId:guid}")]
-        public async Task<ActionResult<AlbumDto>> GetOne([FromRoute] Guid albumId, CancellationToken ct)
-        {
-            var req = new GetAlbumReq
+            var req = new GetAlbumPhotoReq
             {
-                AlbumId = albumId
+                AlbumPhotoId = albumPhotoId,
+                AlbumId = albumId,
             };
 
-            var data = await _read.GetAlbumAsync(req, ct);
+            var data = await _read.GetAlbumPhotoAsync(req, ct);
             if (data == null) return NotFound();
             return Ok(data);
         }
 
-        [HttpPost("CreateAlbumWithUpload")]
-        public async Task<ActionResult<Guid>> Create([FromForm] CreateAlbumWithUploadForm form, CancellationToken ct)
+        // POST /Admin/Api/AlbumCategoriesApi
+        [HttpPost]
+        public async Task<ActionResult<Guid>> Create([FromForm] CreateAlbumPhotoWithUploadForm form, CancellationToken ct)
         {
-            CreateAlbumReq req = new CreateAlbumReq()
+            CreateAlbumPhotoReq req = new CreateAlbumPhotoReq()
             {
-                AlbumCategoryId = form.AlbumCategoryId,
-                OwnerAccountId = form.OwnerAccountId,
-                Title = form.Title,
-                Description = form.Description
+                AlbumId = form.AlbumId,
             };
 
             var files = form.Files?.Where(f => f is not null && f.Length > 0).ToList() ?? new List<IFormFile>();
@@ -78,9 +68,9 @@ namespace MyAlbum.Web.Areas.Admin.Controllers
             if (files.Count == 0)
                 return BadRequest("至少要上傳 1 張圖片");
 
-            const int maxFiles = 1;
+            const int maxFiles = 5;
             const long maxFileSize = 10 * 1024 * 1024;   // 單檔 10MB
-            const long maxTotalSize = 10 * 1024 * 1024; // 總量 10MB
+            const long maxTotalSize = 50 * 1024 * 1024; // 總量 50MB
             var allowedExtensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
                 {
                     ".jpg", ".jpeg", ".png"
@@ -124,7 +114,7 @@ namespace MyAlbum.Web.Areas.Admin.Controllers
                     });
                 }
 
-                var id = await _create.CreateAlbumAsync(req, uploadFiles, ct);
+                var id = await _create.CreateAlbumPhotoAsync(req, uploadFiles, ct);
                 return Ok(id);
             }
             finally
@@ -136,28 +126,25 @@ namespace MyAlbum.Web.Areas.Admin.Controllers
             }
         }
 
-        [HttpPut("{albumId:guid}")]
-        public async Task<ActionResult<bool>> Update([FromRoute] Guid albumId, [FromForm] UpdateAlbumWithUploadForm form, CancellationToken ct)
+        // PUT /Admin/Api/AlbumCategoriesApi/{id}
+        [HttpPut("{albumPhotoId:guid}/{albumId:guid}")]
+        public async Task<ActionResult<bool>> Update([FromRoute] Guid albumPhotoId, [FromRoute] Guid albumId, [FromForm] UpdateAlbumPhotoWithUploadForm form, CancellationToken ct)
         {
-            UpdateAlbumReq req = new UpdateAlbumReq()
-            {
-                // 防止隨便改 body 的 id
-                AlbumId = albumId,
-                AlbumCategoryId = form.AlbumCategoryId,
-                OwnerAccountId = form.OwnerAccountId,
-                Title = form.Title,
-                Description = form.Description,
-                Status = form.Status,
-            };
+            UpdateAlbumPhotoReq req = new UpdateAlbumPhotoReq();
+            // 防止隨便改 body 的 id
+            req.AlbumPhotoId = albumPhotoId;
+            req.AlbumId = albumId;
+            req.SortOrder = form.SortOrder;
+            req.Status = form.Status;
 
             var files = form.Files?.Where(f => f is not null && f.Length > 0).ToList() ?? new List<IFormFile>();
             var uploadFiles = new List<UploadFileStream>(files.Count);
 
             if (files.Count > 0)
             {
-                const int maxFiles = 10;
+                const int maxFiles = 1;
                 const long maxFileSize = 10 * 1024 * 1024;   // 單檔 10MB
-                const long maxTotalSize = 50 * 1024 * 1024; // 總量 50MB
+                const long maxTotalSize = 10 * 1024 * 1024; // 總量 10MB
                 var allowedExtensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
                 {
                     ".jpg", ".jpeg", ".png"
@@ -201,7 +188,7 @@ namespace MyAlbum.Web.Areas.Admin.Controllers
                         });
                     }
 
-                    var ok = await _update.UpdateAlbumAsync(req, uploadFiles, ct);
+                    var ok = await _update.UpdateAlbumPhotoAsync(req, uploadFiles, ct);
                     return Ok(ok);
                 }
                 finally
@@ -214,21 +201,22 @@ namespace MyAlbum.Web.Areas.Admin.Controllers
             }
             else
             {
-                var ok = await _update.UpdateAlbumAsync(req, uploadFiles, ct);
+                var ok = await _update.UpdateAlbumPhotoAsync(req, uploadFiles, ct);
                 return Ok(ok);
             }
         }
 
-        [HttpPatch("{albumId:guid}/status")]
-        public async Task<ActionResult<bool>> UpdateStatus([FromRoute] Guid albumId, [FromBody] UpdateStatusBody body, CancellationToken ct)
+        // PATCH /Admin/Api/AlbumCategoriesApi/{id}/status
+        [HttpPatch("{id:guid}/status")]
+        public async Task<ActionResult<bool>> UpdateStatus([FromRoute] Guid id, [FromBody] UpdateStatusBody body, CancellationToken ct)
         {
-            var req = new UpdateAlbumActiveReq
+            var req = new UpdateAlbumPhotoActiveReq
             {
-                AlbumId = albumId,
+                AlbumPhotoId = id,
                 Status = body.Status
             };
 
-            var ok = await _update.UpdateAlbumActiveAsync(req, ct);
+            var ok = await _update.UpdateAlbumPhotoActiveAsync(req, ct);
             return Ok(ok);
         }
     }

@@ -10,17 +10,5 @@ namespace MyAlbum.Models.AlbumPhoto
     {
         [Required]
         public Guid AlbumId { get; set; }
-
-        [Required(ErrorMessage = "檔案路徑必填")]
-        public string FilePath { get; set; } = null!;
-
-        public string? OriginalFileName { get; set; }
-
-        public string? ContentType { get; set; }
-
-        public long FileSizeBytes { get; set; }
-
-        [Required(ErrorMessage = "排序必填")]
-        public int SortOrder { get; set; }
     }
 }
