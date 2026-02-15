@@ -1,8 +1,9 @@
 ﻿using MyAlbum.Domain;
 using MyAlbum.Domain.AlbumComment;
 using MyAlbum.Models.AlbumComment;
-using MyAlbum.Shared.Idenyity;
+using MyAlbum.Shared.Enums;
 using MyAlbum.Shared.Extensions;
+using MyAlbum.Shared.Idenyity;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -26,28 +27,50 @@ namespace MyAlbum.Application.AlbumComment.implement
         public async Task<bool> UpdateAlbumCommentAsync(UpdateAlbumCommentReq req, CancellationToken ct = default)
         {
             var operatorId = _currentUser.GetRequiredAccountId();
+            var type = _currentUser.GetRequiredAccountType();
 
             AlbumCommentUpdateDto dto = new AlbumCommentUpdateDto();
             dto.AlbumCommentId = req.AlbumCommentId;
-            dto.AlbumPhotoId = req.AlbumPhotoId;
             dto.MemberId = req.MemberId;
             dto.Comment = req.Comment;
+            dto.IsChanged = true;
             dto.Status = req.Status;
             dto.UpdatedBy = operatorId;
-
+            dto.UpdatedAtUtc = DateTime.UtcNow;
+            if (type == AccountType.Member)
+            {
+                // 覆蓋
+                dto.MemberId = operatorId;
+                dto.UpdateByMember = true;
+            }
+            else
+            {
+                dto.UpdateByMember = false;
+            }
             return await _mainRepo.UpdateAlbumCommentAsync(dto, ct);
         }
 
         public async Task<bool> UpdateAlbumCommentActiveAsync(UpdateAlbumCommentActiveReq req, CancellationToken ct = default)
         {
             var operatorId = _currentUser.GetRequiredAccountId();
+            var type = _currentUser.GetRequiredAccountType();
 
-            AlbumCommentUpdateDto dto = new AlbumCommentUpdateDto();
+            AlbumCommentUpdateActiveDto dto = new AlbumCommentUpdateActiveDto();
             dto.AlbumCommentId = req.AlbumCommentId; // PK
             dto.Status = req.Status;
             dto.UpdatedBy = operatorId;
-
-            return await _mainRepo.UpdateAlbumCommentAsync(dto, ct);
+            dto.UpdatedAtUtc = DateTime.UtcNow;
+            if (type == AccountType.Member)
+            {
+                // 覆蓋
+                dto.MemberId = operatorId;
+                dto.UpdateByMember = true;
+            }
+            else
+            {
+                dto.UpdateByMember = false;
+            }
+            return await _mainRepo.UpdateAlbumCommentActiveAsync(dto, ct);
         }
     }
 }

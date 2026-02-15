@@ -24,15 +24,14 @@ namespace MyAlbum.Repository.Business.AlbumComment
             var strategy = db.Database.CreateExecutionStrategy();
 
             /* 資料檢查區塊 */
-            var data = await db.AlbumComments.FirstOrDefaultAsync(m =>
-                m.AlbumCommentId == dto.AlbumCommentId &&
-                m.AlbumPhotoId == dto.AlbumPhotoId &&
-                m.MemberId == dto.MemberId, ct);
+            var data = await db.AlbumComments.FirstOrDefaultAsync(m => m.AlbumCommentId == dto.AlbumCommentId, ct);
 
             if (data == null)
                 throw new InvalidOperationException("找不到指定的資料。");
 
             /* 額外確認 */
+            if (dto.UpdateByMember && data.MemberId != dto.MemberId)
+                throw new InvalidOperationException("非本人無法更新。");
 
             await strategy.ExecuteAsync(async () =>
             {
@@ -71,13 +70,14 @@ namespace MyAlbum.Repository.Business.AlbumComment
             var strategy = db.Database.CreateExecutionStrategy();
 
             /* 資料檢查區塊 */
-            var data = await db.AlbumComments.FirstOrDefaultAsync(m =>
-                m.AlbumCommentId == dto.AlbumCommentId, ct);
+            var data = await db.AlbumComments.FirstOrDefaultAsync(m =>  m.AlbumCommentId == dto.AlbumCommentId, ct);
 
             if (data == null)
                 throw new InvalidOperationException("找不到指定的資料。");
 
             /* 額外確認 */
+            if (dto.UpdateByMember && data.MemberId != dto.MemberId)
+                throw new InvalidOperationException("非本人無法更新。");
 
             await strategy.ExecuteAsync(async () =>
             {

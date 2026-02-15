@@ -19,5 +19,7 @@ namespace MyAlbum.Models.AlbumComment
 
         public DateTime UpdatedAtUtc { get; set; } = DateTime.UtcNow;
         public Guid UpdatedBy { get; set; }
+
+        public bool UpdateByMember { get; set; } = true;
     }
 }
