@@ -2,6 +2,7 @@
 using MyAlbum.Domain;
 using MyAlbum.Domain.EmployeeAccount;
 using MyAlbum.Infrastructure.EF.Data;
+using MyAlbum.Models.Base;
 using MyAlbum.Models.EmployeeAccount;
 using MyAlbum.Models.Identity;
 using MyAlbum.Shared.Enums;
@@ -67,9 +68,9 @@ namespace MyAlbum.Repository.Business.EmployeeAccount
             return result;
         }
 
-        public async Task<List<EmployeeAccountDto>> GetEmployeeAccountListAsync(GetEmployeeAccountListReq req, CancellationToken ct = default)
+        public async Task<ResponseBase<List<EmployeeAccountDto>>> GetEmployeeAccountListAsync(PageRequestBase<GetEmployeeAccountListReq> req, CancellationToken ct = default)
         {
-            var result = new List<EmployeeAccountDto>();
+            var result = new ResponseBase<List<EmployeeAccountDto>>();
             using var ctx = _factory.Create(ConnectionMode.Slave);
             var db = ctx.AsDbContext<MyAlbumContext>();
 
@@ -77,6 +78,7 @@ namespace MyAlbum.Repository.Business.EmployeeAccount
                         join account in db.Accounts.AsNoTracking() on emp.AccountId equals account.AccountId
                         where
                             account.AccountType == (int)AccountType.Admin
+                        orderby emp.CreatedAtUtc
                         select new EmployeeAccountDto()
                         {
                             EmployeeId = emp.EmployeeId,
@@ -87,10 +89,13 @@ namespace MyAlbum.Repository.Business.EmployeeAccount
                             Status = (Status)account.Status,
                         };
 
-            if (!string.IsNullOrWhiteSpace(req.UserName))
-                query = query.Where(x => x.UserName.Contains(req.UserName));
+            if (!string.IsNullOrWhiteSpace(req.Data.UserName))
+                query = query.Where(x => x.UserName.Contains(req.Data.UserName));
+            if (req.Data.Status.HasValue)
+                query = query.Where(m => m.Status == req.Data.Status);
 
-            result = await query.ToListAsync(ct);
+            result.Count = await query.CountAsync();
+            result.Data = await query.Skip((req.pageIndex - 1) * req.pageSize).Take(req.pageSize).AsNoTracking().ToListAsync(ct);
 
             return result;
         }

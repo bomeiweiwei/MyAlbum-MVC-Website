@@ -15,7 +15,7 @@ namespace MyAlbum.Repository.Business.AlbumPhoto
         private readonly IAlbumDbContextFactory _factory;
         public AlbumPhotoCreateRepository(IAlbumDbContextFactory factory) => _factory = factory;
 
-        public async Task<Guid> CreateAlbumPhotoAsync(AlbumPhotoCreateDto dto, CancellationToken ct = default)
+        public async Task<Guid> CreateAlbumPhotoAsync(List<AlbumPhotoCreateDto> list, CancellationToken ct = default)
         {
             Guid result = Guid.Empty;
 
@@ -28,30 +28,32 @@ namespace MyAlbum.Repository.Business.AlbumPhoto
                 await using var tx = await db.Database.BeginTransactionAsync(ct);
                 try
                 {
-                    var data = new Infrastructure.EF.Models.AlbumPhoto
+                    foreach (var item in list)
                     {
-                        AlbumPhotoId = dto.AlbumPhotoId,
-                        AlbumId = dto.AlbumId,
-                        FilePath = dto.FilePath,
-                        OriginalFileName = dto.OriginalFileName,
-                        ContentType = dto.ContentType,
-                        FileSizeBytes = dto.FileSizeBytes,
-                        SortOrder = dto.SortOrder,
-                        CommentNum = dto.CommentNum,
-                        Status = (byte)dto.Status,
-                        CreatedAtUtc = dto.CreatedAtUtc,
-                        CreatedBy = dto.CreatedBy,
-                        UpdatedAtUtc = dto.CreatedAtUtc,
-                        UpdatedBy = dto.CreatedBy
-                    };
+                        var data = new Infrastructure.EF.Models.AlbumPhoto
+                        {
+                            AlbumPhotoId = item.AlbumPhotoId,
+                            AlbumId = item.AlbumId,
+                            FilePath = item.FilePath,
+                            OriginalFileName = item.OriginalFileName,
+                            ContentType = item.ContentType,
+                            FileSizeBytes = item.FileSizeBytes,
+                            SortOrder = item.SortOrder,
+                            CommentNum = item.CommentNum,
+                            Status = (byte)item.Status,
+                            CreatedAtUtc = item.CreatedAtUtc,
+                            CreatedBy = item.CreatedBy,
+                            UpdatedAtUtc = item.CreatedAtUtc,
+                            UpdatedBy = item.CreatedBy
+                        };
 
-                    await db.AlbumPhotos.AddAsync(data, ct);
-
+                        await db.AlbumPhotos.AddAsync(data, ct);
+                    }
                     await db.SaveChangesAsync(ct);
 
                     await tx.CommitAsync(ct);
 
-                    result = data.AlbumPhotoId;
+                    result = list.First().AlbumPhotoId;
                 }
                 catch
                 {

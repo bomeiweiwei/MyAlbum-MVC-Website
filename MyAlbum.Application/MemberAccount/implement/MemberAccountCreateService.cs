@@ -1,4 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity;
+using MyAlbum.Application.Member;
+using MyAlbum.Application.Uploads;
 using MyAlbum.Domain;
 using MyAlbum.Domain.EmployeeAccount;
 using MyAlbum.Domain.MemberAccount;
@@ -7,10 +9,13 @@ using MyAlbum.Models.Employee;
 using MyAlbum.Models.Identity;
 using MyAlbum.Models.Member;
 using MyAlbum.Models.MemberAccount;
+using MyAlbum.Models.UploadFiles;
+using MyAlbum.Shared.Enums;
 using MyAlbum.Shared.Extensions;
 using MyAlbum.Shared.Idenyity;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Text;
 
 namespace MyAlbum.Application.MemberAccount.implement
@@ -20,39 +25,73 @@ namespace MyAlbum.Application.MemberAccount.implement
         private readonly IPasswordHasher<AccountDto> _hasher;
         private readonly ICurrentUserAccessor _currentUser;
         private readonly IMemberAccountCreateRepository _memberAccountCreateRepository;
+        private readonly IFileUploadManagerService _fileUploadManagerService;
         public MemberAccountCreateService(
            IAlbumDbContextFactory factory,
            IPasswordHasher<AccountDto> hasher,
            ICurrentUserAccessor currentUser,
-           IMemberAccountCreateRepository memberAccountCreateRepository) : base(factory)
+           IMemberAccountCreateRepository memberAccountCreateRepository,
+           IFileUploadManagerService fileUploadManagerService) : base(factory)
         {
             _hasher = hasher;
             _currentUser = currentUser;
             _memberAccountCreateRepository = memberAccountCreateRepository;
+            _fileUploadManagerService = fileUploadManagerService;
         }
 
-        public async Task<Guid> CreateMemberWithAccountAsync(CreateMemberReq req, CancellationToken ct = default)
+        public async Task<Guid> CreateMemberWithAccountAsync(CreateMemberReq req, IReadOnlyList<UploadFileStream> files, CancellationToken ct = default)
         {
             var operatorId = _currentUser.GetRequiredAccountId();
             var passwordHash = _hasher.HashPassword(null!, req.Password);
 
+            Guid accountId = Guid.NewGuid();
+            Guid memberId = Guid.NewGuid();
+
+            // 上傳檔案並取得檔案位置
+            Dictionary<string, string> dict = new Dictionary<string, string>();
+            int fileCount = files.Count;
+            if (fileCount > 0)
+            {
+                UploadModel uploadModel = new UploadModel()
+                {
+                    Id = memberId,
+                    ColumnType = 1,
+                    EntityUploadType = EntityUploadType.Member
+                };
+                dict = await _fileUploadManagerService.FileUpload(uploadModel, files, ct);
+            }
+            string avatarPath = string.Empty;
+            if (dict.Count > 0)
+            {
+                var chkFile = files.First();
+                if (dict.TryGetValue(chkFile.FileName, out var name))
+                {
+                    avatarPath = name;
+                }
+            }
+
+            DateTime now = DateTime.UtcNow;
             AccountCreateDto accountCreateDto = new AccountCreateDto
             {
-                AccountId = Guid.NewGuid(),
+                AccountId = accountId,
                 UserName = req.UserName,
                 PasswordHash = passwordHash,
+                CreatedAtUtc = now,
                 CreatedBy = operatorId
             };
             MemberCreateDto memberCreateDto = new MemberCreateDto
             {
-                MemberId = Guid.NewGuid(),
+                MemberId = memberId,
                 AccountId = accountCreateDto.AccountId,
                 Email = req.Email,
+                AvatarPath = !string.IsNullOrWhiteSpace(avatarPath) ? avatarPath : null,
                 DisplayName = req.DisplayName,
+                CreatedAtUtc = now,
                 CreatedBy = operatorId
             };
 
-            return await _memberAccountCreateRepository.CreateMemberWithAccountAsync(accountCreateDto, memberCreateDto, ct);
+            var id = await _memberAccountCreateRepository.CreateMemberWithAccountAsync(accountCreateDto, memberCreateDto, ct);
+            return id;
         }
     }
 }

@@ -1,6 +1,8 @@
 ﻿using MyAlbum.Application.Uploads;
 using MyAlbum.Domain;
 using MyAlbum.Domain.Member;
+using MyAlbum.Models.UploadFiles;
+using MyAlbum.Shared.Enums;
 using MyAlbum.Shared.Extensions;
 using MyAlbum.Shared.Idenyity;
 using System;
@@ -9,27 +11,20 @@ using System.Text;
 
 namespace MyAlbum.Application.Member.implement
 {
-    public class MemberDataUploadService : BaseService, IMemberDataUploadService
+    public class MemberAvatarUploadService : BaseService, IMemberAvatarUploadService
     {
         private readonly IUploadPathService _paths;
-        private readonly ICurrentUserAccessor _currentUser;
-        private readonly IMemberUpdateRepository _memberUpdateRepository;
-        public MemberDataUploadService(
+        public MemberAvatarUploadService(
            IAlbumDbContextFactory factory,
-           IUploadPathService paths,
-           ICurrentUserAccessor currentUser,
-           IMemberUpdateRepository memberUpdateRepository
+           IUploadPathService paths
            ) : base(factory)
         {
-            _currentUser = currentUser;
             _paths = paths;
-            _memberUpdateRepository = memberUpdateRepository;
         }
 
-        public async Task<string> UploadAvatarAsync(Guid memberId, Stream fileStream, string originalFileName, CancellationToken ct)
+        public async Task<string> UploadAvatarAsync(UploadModel model, Stream fileStream, string originalFileName, CancellationToken ct)
         {
-            var operatorId = _currentUser.GetRequiredAccountId();
-            var fileKey = _paths.BuildMemberAvatarFileKey(memberId, originalFileName);
+            var fileKey = _paths.BuildMemberAvatarFileKey(model.Id, originalFileName);
 
             var physicalPath = _paths.ToPhysicalPath(fileKey);
             Directory.CreateDirectory(Path.GetDirectoryName(physicalPath)!);
@@ -41,9 +36,8 @@ namespace MyAlbum.Application.Member.implement
                     await fileStream.CopyToAsync(outStream, ct);
                 }
 
-                await _memberUpdateRepository.UpdateMemberAvatarPathAsync(memberId, fileKey, operatorId, ct);
-
-                return _paths.ToPublicUrl(fileKey);
+                //return _paths.ToPublicUrl(fileKey);
+                return fileKey;
             }
             catch
             {

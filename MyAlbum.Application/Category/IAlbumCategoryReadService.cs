@@ -1,4 +1,5 @@
-﻿using MyAlbum.Models.Category;
+﻿using MyAlbum.Models.Base;
+using MyAlbum.Models.Category;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -9,6 +10,8 @@ namespace MyAlbum.Application.Category
     {
         Task<AlbumCategoryDto?> GetAlbumCategoryAsync(GetAlbumCategoryReq req, CancellationToken ct = default);
 
-        Task<List<AlbumCategoryDto>> GetAlbumCategoryListAsync(GetAlbumCategoryReq req, CancellationToken ct = default);
+        Task<ResponseBase<List<AlbumCategoryDto>>> GetAlbumCategoryListAsync(PageRequestBase<GetAlbumCategoryListReq> req, CancellationToken ct = default);
+
+        Task<List<AlbumCategoryDto>> GetAlbumCategoryItemListAsync(GetAlbumCategoryListReq req, CancellationToken ct = default);
     }
 }

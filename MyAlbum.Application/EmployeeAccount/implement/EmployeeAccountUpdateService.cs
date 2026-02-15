@@ -53,7 +53,7 @@ namespace MyAlbum.Application.EmployeeAccount.implement
             {
                 AccountId = req.AccountId,
                 PasswordHash = passwordHash,
-                Status = req.AccountStatus,
+                Status = req.Status,
                 UpdateBy = operatorId
             };
 
@@ -63,7 +63,7 @@ namespace MyAlbum.Application.EmployeeAccount.implement
                 AccountId = req.AccountId,
                 Email = req.Email,
                 Phone = req.Phone,
-                Status = req.EmployeeStatus,
+                Status = req.Status,
                 UpdateBy = operatorId
             };
 
@@ -123,8 +123,8 @@ namespace MyAlbum.Application.EmployeeAccount.implement
 
                 try
                 {
-                    var accountResult = await _accountUpdateRepository.UpdateAccountAsync(ctx, accountDto, ct);
-                    var employeeResult = await _employeeUpdateRepository.UpdateEmployeeAsync(ctx, employeeDto, ct);
+                    var accountResult = await _accountUpdateRepository.UpdateAccountActiveAsync(ctx, accountDto, ct);
+                    var employeeResult = await _employeeUpdateRepository.UpdateEmployeeActiveAsync(ctx, employeeDto, ct);
 
                     result = accountResult && employeeResult;
                     if (result)

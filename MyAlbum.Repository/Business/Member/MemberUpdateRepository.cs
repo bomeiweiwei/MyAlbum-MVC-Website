@@ -69,9 +69,10 @@ namespace MyAlbum.Repository.Business.Member
 
             data.Email = memberDto.Email;
             data.DisplayName = memberDto.DisplayName;
+            data.AvatarPath = memberDto.AvatarPath ?? data.AvatarPath;
             data.Status = (byte)memberDto.Status;
+            data.UpdatedAtUtc = memberDto.UpdatedAtUtc;
             data.UpdatedBy = memberDto.UpdateBy;
-            data.UpdatedAtUtc = DateTime.UtcNow;
             int check = await ctx.SaveChangesAsync(ct);
             if (check == 1)
                 result = true;
@@ -83,13 +84,14 @@ namespace MyAlbum.Repository.Business.Member
             var result = false;
 
             var db = ctx.AsDbContext<MyAlbumContext>();
-            var data = await db.Employees.Where(x => x.EmployeeId == memberDto.MemberId && x.AccountId == memberDto.AccountId).FirstOrDefaultAsync(ct);
+            var data = await db.Members.Where(x => x.MemberId == memberDto.MemberId && x.AccountId == memberDto.AccountId).FirstOrDefaultAsync(ct);
             if (data == null)
                 return result;
 
             data.Status = (byte)memberDto.Status;
+            data.UpdatedAtUtc = memberDto.UpdatedAtUtc;
             data.UpdatedBy = memberDto.UpdateBy;
-            data.UpdatedAtUtc = DateTime.UtcNow;
+            
             int check = await ctx.SaveChangesAsync(ct);
             if (check == 1)
                 result = true;
