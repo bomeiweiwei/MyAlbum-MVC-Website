@@ -6,6 +6,7 @@ using MyAlbum.Application.MemberAccount;
 using MyAlbum.Infrastructure.EF.Models;
 using MyAlbum.Models.Album;
 using MyAlbum.Models.Base;
+using MyAlbum.Models.Category;
 using MyAlbum.Models.MemberAccount;
 using MyAlbum.Models.UploadFiles;
 using MyAlbum.Web.Models.Album;
@@ -37,6 +38,13 @@ namespace MyAlbum.Web.Areas.Admin.Controllers
         public async Task<ActionResult<ResponseBase<List<AlbumDto>>>> List([FromQuery] PageRequestBase<GetAlbumListReq> req, CancellationToken ct = default)
         {
             var result = await _read.GetAlbumListAsync(req, ct);
+            return Ok(result);
+        }
+
+        [HttpGet("items")]
+        public async Task<ActionResult<List<AlbumCategoryDto>>> GetItemListAsync([FromQuery] GetAlbumListReq req, CancellationToken ct = default)
+        {
+            var result = await _read.GetAlbumListItemAsync(req, ct);
             return Ok(result);
         }
 

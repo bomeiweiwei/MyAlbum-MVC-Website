@@ -5,6 +5,8 @@ using MyAlbum.Domain.Category;
 using MyAlbum.Domain.MemberAccount;
 using MyAlbum.Models.Album;
 using MyAlbum.Models.Base;
+using MyAlbum.Models.MemberAccount;
+using MyAlbum.Shared.Enums;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -46,6 +48,27 @@ namespace MyAlbum.Application.Album.implement
                     data.PublicCoverUrl = _paths.ToPublicUrl(data.PublicCoverUrl);
                 }
             }
+            return list;
+        }
+
+        public async Task<List<AlbumDto>> GetAlbumListItemAsync(GetAlbumListReq req, CancellationToken ct = default)
+        {
+            var pageReq = new PageRequestBase<GetAlbumListReq>()
+            {
+                pageIndex = 1,
+                pageSize = 99999,
+                Data = req
+            };
+            //pageReq.Data.Status = Status.Active; // 由前端帶入
+            var dataList = await GetAlbumListAsync(pageReq, ct);
+            var list = dataList.Data;
+            list = list.Select(m => new AlbumDto
+            {
+                AlbumId = m.AlbumId,
+                Title = m.Title,
+                Status = m.Status
+            }).ToList();
+
             return list;
         }
     }

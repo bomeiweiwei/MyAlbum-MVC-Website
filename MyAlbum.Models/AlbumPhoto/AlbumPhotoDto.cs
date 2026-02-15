@@ -27,5 +27,7 @@ namespace MyAlbum.Models.AlbumPhoto
         public Guid UpdatedBy { get; set; }
 
         public string Title { get; set; }
+        public string OwnerName { get; set; }
+        public Guid OwnerAccountId { get; set; }
     }
 }

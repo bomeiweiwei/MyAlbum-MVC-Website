@@ -2,6 +2,7 @@
 using MyAlbum.Domain;
 using MyAlbum.Domain.AlbumPhoto;
 using MyAlbum.Infrastructure.EF.Data;
+using MyAlbum.Infrastructure.EF.Models;
 using MyAlbum.Models.AlbumPhoto;
 using MyAlbum.Models.Base;
 using MyAlbum.Shared.Enums;
@@ -27,8 +28,12 @@ namespace MyAlbum.Repository.Business.AlbumPhoto
                 from main in db.AlbumPhotos.AsNoTracking()
                 join album in db.Albums.AsNoTracking() on main.AlbumId equals album.AlbumId into photoGroup
                 from album in photoGroup.DefaultIfEmpty()
+                join member in db.Members.AsNoTracking() on album.OwnerAccountId equals member.AccountId into memberGroup
+                from member in memberGroup.DefaultIfEmpty()
                 select new AlbumPhotoDto
                 {
+                    OwnerName = member.DisplayName,
+                    OwnerAccountId = album.OwnerAccountId,
                     Title = album.Title,
                     AlbumPhotoId = main.AlbumPhotoId,
                     AlbumId = main.AlbumId,
@@ -82,8 +87,13 @@ namespace MyAlbum.Repository.Business.AlbumPhoto
                 from main in db.AlbumPhotos.AsNoTracking()
                 join album in db.Albums.AsNoTracking() on main.AlbumId equals album.AlbumId into photoGroup
                 from album in photoGroup.DefaultIfEmpty()
+                join member in db.Members.AsNoTracking() on album.OwnerAccountId equals member.AccountId into memberGroup
+                from member in memberGroup.DefaultIfEmpty()
+                orderby main.AlbumId, main.SortOrder
                 select new AlbumPhotoDto
                 {
+                    OwnerName = member.DisplayName,
+                    OwnerAccountId = album.OwnerAccountId,
                     Title = album.Title,
                     AlbumPhotoId = main.AlbumPhotoId,
                     AlbumId = main.AlbumId,
@@ -108,7 +118,10 @@ namespace MyAlbum.Repository.Business.AlbumPhoto
             { 
                 query = query.Where(x => x.AlbumId == req.Data.AlbumId.Value);
             }
-
+            if (req.Data.OwnerAccountId.HasValue)
+            {
+                query = query.Where(x => x.OwnerAccountId == req.Data.OwnerAccountId);
+            }
             //if (!string.IsNullOrWhiteSpace(req.FilePath)) { query = query.Where(m => m.FilePath.Contains(req.FilePath)); }
             //if (!string.IsNullOrWhiteSpace(req.OriginalFileName)) { query = query.Where(m => (m.OriginalFileName ?? "").Contains(req.OriginalFileName)); }
             //if (!string.IsNullOrWhiteSpace(req.ContentType)) { query = query.Where(m => (m.ContentType ?? "").Contains(req.ContentType)); }
