@@ -50,6 +50,24 @@ namespace MyAlbum.Repository.Business.AlbumComment
                     await db.AlbumComments.AddAsync(data, ct);
 
                     await db.SaveChangesAsync(ct);
+
+                    var photoAffected = await db.AlbumPhotos
+                                        .Where(p => p.AlbumPhotoId == dto.AlbumPhotoId)
+                                        .ExecuteUpdateAsync(s => s.SetProperty(p => p.CommentNum, p => p.CommentNum + 1), ct);
+
+                    if (photoAffected != 1)
+                        throw new InvalidOperationException("AlbumPhoto not found");
+
+                    var albumId = await db.AlbumPhotos
+                                                    .Where(p => p.AlbumPhotoId == dto.AlbumPhotoId)
+                                                    .Select(p => p.AlbumId)
+                                                    .SingleAsync(ct);
+
+                    await db.Albums
+                                .Where(a => a.AlbumId == albumId)
+                                .ExecuteUpdateAsync(s => s.SetProperty(a => a.TotalCommentNum, a => a.TotalCommentNum + 1), ct);
+
+
                     await tx.CommitAsync(ct);
 
                     result = data.AlbumCommentId;

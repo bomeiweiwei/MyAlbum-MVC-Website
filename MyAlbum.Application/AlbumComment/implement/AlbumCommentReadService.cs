@@ -1,6 +1,7 @@
 ﻿using MyAlbum.Domain;
 using MyAlbum.Domain.AlbumComment;
 using MyAlbum.Models.AlbumComment;
+using MyAlbum.Models.Base;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -24,7 +25,7 @@ namespace MyAlbum.Application.AlbumComment.implement
             return await _mainRepo.GetAlbumCommentAsync(req, ct);
         }
 
-        public async Task<List<AlbumCommentDto>> GetAlbumCommentListAsync(GetAlbumCommentReq req, CancellationToken ct = default)
+        public async Task<ResponseBase<List<AlbumCommentDto>>> GetAlbumCommentListAsync(PageRequestBase<GetAlbumCommentListReq> req, CancellationToken ct = default)
         {
             return await _mainRepo.GetAlbumCommentListAsync(req, ct);
         }
