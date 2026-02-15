@@ -68,7 +68,7 @@ namespace MyAlbum.Repository.Business.Category
                 query = query.Where(m => m.Status == req.Data.Status);
             }
 
-            result.Count = await query.CountAsync();
+            result.Count = await query.CountAsync(ct);
             result.Data = await query.Skip((req.pageIndex - 1) * req.pageSize).Take(req.pageSize).AsNoTracking().ToListAsync(ct);
 
             return result;

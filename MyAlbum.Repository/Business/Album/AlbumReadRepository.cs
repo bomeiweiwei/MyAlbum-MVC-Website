@@ -56,6 +56,13 @@ namespace MyAlbum.Repository.Business.Album
 
             result = await query.FirstOrDefaultAsync(ct);
 
+            if (result != null)
+            {
+                result.ReleaseTimeUtc = DateTime.SpecifyKind(result.ReleaseTimeUtc, DateTimeKind.Utc);
+                result.CreatedAtUtc = DateTime.SpecifyKind(result.CreatedAtUtc, DateTimeKind.Utc);
+                result.UpdatedAtUtc = DateTime.SpecifyKind(result.UpdatedAtUtc, DateTimeKind.Utc);
+            }
+
             return result;
         }
 
