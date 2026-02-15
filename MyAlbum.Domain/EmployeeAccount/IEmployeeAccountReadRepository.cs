@@ -1,4 +1,5 @@
-﻿using MyAlbum.Models.EmployeeAccount;
+﻿using MyAlbum.Models.Base;
+using MyAlbum.Models.EmployeeAccount;
 using MyAlbum.Models.Identity;
 using System;
 using System.Collections.Generic;
@@ -15,5 +16,9 @@ namespace MyAlbum.Domain.EmployeeAccount
         /// <param name="ct"></param>
         /// <returns></returns>
         Task<AccountDto?> GetEmployeeByUserNameAsync(GetEmpAccountDto dto, CancellationToken ct = default);
+
+        Task<EmployeeAccountDto?> GetEmployeeAccountAsync(GetEmployeeAccountReq req, CancellationToken ct = default);
+
+        Task<ResponseBase<List<EmployeeAccountDto>>> GetEmployeeAccountListAsync(PageRequestBase<GetEmployeeAccountListReq> req, CancellationToken ct = default);
     }
 }

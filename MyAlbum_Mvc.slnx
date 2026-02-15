@@ -5,6 +5,7 @@
     <Project Path="MyAlbum.Infrastructure/MyAlbum.Infrastructure.csproj" />
     <Project Path="MyAlbum.IoC/MyAlbum.IoC.csproj" />
     <Project Path="MyAlbum.Models/MyAlbum.Models.csproj" />
+    <Project Path="MyAlbum.Repository/MyAlbum.Repository.csproj" Id="431bad78-7e72-40ad-9a20-a575aea63709" />
     <Project Path="MyAlbum.Shared/MyAlbum.Shared.csproj" />
   </Folder>
   <Project Path="MyAlbum.Web/MyAlbum.Web.csproj" />
