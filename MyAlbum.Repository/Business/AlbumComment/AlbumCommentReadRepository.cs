@@ -67,6 +67,8 @@ namespace MyAlbum.Repository.Business.AlbumComment
 
             var query =
                 from main in db.AlbumComments.AsNoTracking()
+                join member in db.Members.AsNoTracking() on main.MemberId equals member.MemberId into memberGroup
+                from member in memberGroup.DefaultIfEmpty()
                 select new AlbumCommentDto
                 {
                     AlbumCommentId = main.AlbumCommentId,
@@ -79,7 +81,8 @@ namespace MyAlbum.Repository.Business.AlbumComment
                     CreatedAtUtc = main.CreatedAtUtc,
                     UpdatedAtUtc = main.UpdatedAtUtc,
                     CreatedBy = main.CreatedBy,
-                    UpdatedBy = main.UpdatedBy
+                    UpdatedBy = main.UpdatedBy,
+                    DisplayName = member.DisplayName
                 };
 
             if (req.Data.AlbumCommentId.HasValue) { query = query.Where(x => x.AlbumCommentId == req.Data.AlbumCommentId.Value); }
@@ -93,11 +96,20 @@ namespace MyAlbum.Repository.Business.AlbumComment
             if (req.Data.Status.HasValue) { query = query.Where(x => x.Status == req.Data.Status.Value); }
 
             if (req.Data.ReleaseTimeUtc.HasValue) { query = query.Where(m => m.ReleaseTimeUtc == req.Data.ReleaseTimeUtc.Value); }
+
             if (req.Data.StartReleaseTimeUtc.HasValue) { query = query.Where(m => m.ReleaseTimeUtc >= req.Data.StartReleaseTimeUtc.Value); }
             if (req.Data.EndReleaseTimeUtc.HasValue) { query = query.Where(m => m.ReleaseTimeUtc < req.Data.EndReleaseTimeUtc.Value); }
 
             result.Count = await query.CountAsync(ct);
             result.Data = await query.Skip((req.pageIndex - 1) * req.pageSize).Take(req.pageSize).AsNoTracking().ToListAsync(ct);
+
+            foreach (var item in result.Data)
+            {
+                item.ReleaseTimeUtc = DateTime.SpecifyKind(item.ReleaseTimeUtc, DateTimeKind.Utc);
+                item.CreatedAtUtc = DateTime.SpecifyKind(item.CreatedAtUtc, DateTimeKind.Utc);
+                item.UpdatedAtUtc = DateTime.SpecifyKind(item.UpdatedAtUtc, DateTimeKind.Utc);
+            }
+
             return result;
         }
     }

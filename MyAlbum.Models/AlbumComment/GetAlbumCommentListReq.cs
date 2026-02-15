@@ -20,6 +20,9 @@ namespace MyAlbum.Models.AlbumComment
         /// </summary>
         public DateTime? ReleaseTimeUtc { get; set; }
 
+        public long? StartLocalMs { get; set; }
+        public long? EndLocalMs { get; set; }
+
         public DateTime? StartReleaseTimeUtc { get; set; }
 
         public DateTime? EndReleaseTimeUtc { get; set; }
