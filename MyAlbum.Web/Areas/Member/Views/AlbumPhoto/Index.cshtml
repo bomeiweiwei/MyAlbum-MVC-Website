@@ -7,6 +7,20 @@
 
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h3 class="mb-0">@ViewData["Title"]</h3>
+    @{
+        Guid albumId = Guid.Empty;
+        var data = Model.FirstOrDefault();
+        if (data != null)
+            albumId = data.AlbumId;
+    }
+    <!-- 新增相片鈕 -->
+    <a class="btn btn-primary"
+       asp-area="Member"
+       asp-controller="AlbumPhoto"
+       asp-route-albumId="@albumId"
+       asp-action="Create">
+        + 新增相片
+    </a>
 </div>
 
 <div class="row">
@@ -33,7 +47,58 @@
                         }
                     </p>
 
-                   
+                    <div class="mt-auto d-flex gap-2">
+                        <!-- 留言檢視按鈕 -->
+                        <a class="btn btn-outline-primary btn-sm"
+                           asp-area="Member"
+                           asp-controller="AlbumComment"
+                           asp-action="Index"
+                           asp-route-albumId="@item.AlbumId">
+                            留言檢視
+                        </a>
+                        <!-- 編輯 -->
+                        <a class="btn btn-outline-secondary btn-sm"
+                           asp-area="Member"
+                           asp-controller="AlbumPhoto"
+                           asp-action="Edit"
+                           asp-route-albumPhotoId="@item.AlbumPhotoId">
+                            編輯
+                        </a>
+                        @if (item.Status == MyAlbum.Shared.Enums.Status.Active)
+                        {
+                            <form asp-area="Member"
+                                  asp-controller="AlbumPhoto"
+                                  asp-action="Disable"
+                                  asp-route-albumPhotoId="@item.AlbumPhotoId"
+                                  asp-route-albumId="@item.AlbumId"
+                                  method="post"
+                                  class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <button type="submit"
+                                        class="btn btn-outline-danger btn-sm"
+                                        onclick="return confirm('確定要停用此相片嗎？');">
+                                    停用
+                                </button>
+                            </form>
+                        }
+                        else
+                        {
+                            <form asp-area="Member"
+                                  asp-controller="AlbumPhoto"
+                                  asp-action="Active"
+                                  asp-route-albumPhotoId="@item.AlbumPhotoId"
+                                  asp-route-albumId="@item.AlbumId"
+                                  method="post"
+                                  class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <button type="submit"
+                                        class="btn btn-outline-danger btn-sm">
+                                    啟用
+                                </button>
+                            </form>
+                        }
+
+                    </div>
                 </div>
             </div>
         </div>
