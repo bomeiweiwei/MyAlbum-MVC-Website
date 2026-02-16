@@ -29,9 +29,5 @@ public partial class AlbumComment
 
     public virtual AlbumPhoto AlbumPhoto { get; set; } = null!;
 
-    public virtual Account CreatedByNavigation { get; set; } = null!;
-
     public virtual Member Member { get; set; } = null!;
-
-    public virtual Account UpdatedByNavigation { get; set; } = null!;
 }

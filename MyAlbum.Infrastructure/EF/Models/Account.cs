@@ -25,41 +25,9 @@ public partial class Account
 
     public Guid UpdatedBy { get; set; }
 
-    public virtual ICollection<AlbumCategory> AlbumCategoryCreatedByNavigations { get; set; } = new List<AlbumCategory>();
+    public virtual ICollection<Album> Albums { get; set; } = new List<Album>();
 
-    public virtual ICollection<AlbumCategory> AlbumCategoryUpdatedByNavigations { get; set; } = new List<AlbumCategory>();
+    public virtual Employee? Employee { get; set; }
 
-    public virtual ICollection<AlbumComment> AlbumCommentCreatedByNavigations { get; set; } = new List<AlbumComment>();
-
-    public virtual ICollection<AlbumComment> AlbumCommentUpdatedByNavigations { get; set; } = new List<AlbumComment>();
-
-    public virtual ICollection<Album> AlbumCreatedByNavigations { get; set; } = new List<Album>();
-
-    public virtual ICollection<Album> AlbumOwnerAccounts { get; set; } = new List<Album>();
-
-    public virtual ICollection<AlbumPhoto> AlbumPhotoCreatedByNavigations { get; set; } = new List<AlbumPhoto>();
-
-    public virtual ICollection<AlbumPhoto> AlbumPhotoUpdatedByNavigations { get; set; } = new List<AlbumPhoto>();
-
-    public virtual ICollection<Album> AlbumUpdatedByNavigations { get; set; } = new List<Album>();
-
-    public virtual Account CreatedByNavigation { get; set; } = null!;
-
-    public virtual Employee? EmployeeAccount { get; set; }
-
-    public virtual ICollection<Employee> EmployeeCreatedByNavigations { get; set; } = new List<Employee>();
-
-    public virtual ICollection<Employee> EmployeeUpdatedByNavigations { get; set; } = new List<Employee>();
-
-    public virtual ICollection<Account> InverseCreatedByNavigation { get; set; } = new List<Account>();
-
-    public virtual ICollection<Account> InverseUpdatedByNavigation { get; set; } = new List<Account>();
-
-    public virtual Member? MemberAccount { get; set; }
-
-    public virtual ICollection<Member> MemberCreatedByNavigations { get; set; } = new List<Member>();
-
-    public virtual ICollection<Member> MemberUpdatedByNavigations { get; set; } = new List<Member>();
-
-    public virtual Account UpdatedByNavigation { get; set; } = null!;
+    public virtual Member? Member { get; set; }
 }
