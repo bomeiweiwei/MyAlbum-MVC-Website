@@ -355,8 +355,8 @@
               if (Number.isNaN(d.getTime())) return '';
               return d.toLocaleString('zh-TW', { timeZone: 'Asia/Taipei', hour12: false });
             }
-            const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 
+            const ONE_DAY_MS = 24 * 60 * 60 * 1000;
             function buildSearchParams() {
                 const startMs = query.releaseDateRange?.[0] ?? null;
                 const endMsExclusive = query.releaseDateRange?.[1]
@@ -531,7 +531,6 @@
                 dialog.saving = true;
                 try {
                     if (dialog.mode === 'create') {
-                        const file = form.file?.raw ?? form.file ?? null;
                         const fd = toFormData({
                               albumCategoryId: form.albumCategoryId,
                               ownerAccountId: form.ownerAccountId,
@@ -539,13 +538,17 @@
                               description: form.description,
                               ...(form.file ? { file: form.file } : {})
                         });
+
+                        if (form.file) {
+                          fd.append("Files", form.file);
+                        }
+
                         const { data: id } = await apiForm.post('CreateAlbumWithUpload', fd);
                         console.log(id);
                         ElementPlus.ElMessage.success('新增成功');
                         dialog.visible = false;
                         loadList();
                     } else {
-                        const file = form.file?.raw ?? form.file ?? null;
                         const fd = toFormData({
                               albumId: form.albumId,
                               albumCategoryId: form.albumCategoryId,
@@ -555,6 +558,11 @@
                               status: form.status,
                               ...(form.file ? { file: form.file } : {})
                         });
+
+                        if (form.file) {
+                          fd.append("Files", form.file);
+                        }
+
                         const { data: ok } = await apiForm.put(`/${form.albumId}`, fd);
                         console.log(ok);
                         ElementPlus.ElMessage.success('更新成功');

@@ -35,9 +35,5 @@ public partial class Album
 
     public virtual ICollection<AlbumPhoto> AlbumPhotos { get; set; } = new List<AlbumPhoto>();
 
-    public virtual Account CreatedByNavigation { get; set; } = null!;
-
     public virtual Account OwnerAccount { get; set; } = null!;
-
-    public virtual Account UpdatedByNavigation { get; set; } = null!;
 }

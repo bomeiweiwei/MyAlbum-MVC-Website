@@ -56,6 +56,7 @@ namespace MyAlbum.Application.MemberAccount.implement
                 pageSize = 99999,
                 Data = req
             };
+            //pageReq.Data.Status = Status.Active; // 由前端帶入
             var dataList = await GetMemberAccountListAsync(pageReq);
 
             var list = dataList.Data;

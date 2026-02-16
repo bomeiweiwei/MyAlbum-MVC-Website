@@ -4,6 +4,6 @@ namespace MyAlbum.Web.Models.Album
 {
     public class UpdateAlbumWithUploadForm: UpdateAlbumReq
     {
-        public IFormFile? File { get; set; }
+        public List<IFormFile> Files { get; set; } = new();
     }
 }

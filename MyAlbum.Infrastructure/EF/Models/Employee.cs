@@ -24,8 +24,4 @@ public partial class Employee
     public Guid UpdatedBy { get; set; }
 
     public virtual Account Account { get; set; } = null!;
-
-    public virtual Account CreatedByNavigation { get; set; } = null!;
-
-    public virtual Account UpdatedByNavigation { get; set; } = null!;
 }

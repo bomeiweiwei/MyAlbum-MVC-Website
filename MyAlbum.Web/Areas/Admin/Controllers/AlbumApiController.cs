@@ -6,7 +6,9 @@ using MyAlbum.Application.MemberAccount;
 using MyAlbum.Infrastructure.EF.Models;
 using MyAlbum.Models.Album;
 using MyAlbum.Models.Base;
+using MyAlbum.Models.Category;
 using MyAlbum.Models.MemberAccount;
+using MyAlbum.Models.UploadFiles;
 using MyAlbum.Web.Models.Album;
 using MyAlbum.Web.Models.MemberAccount;
 
@@ -39,6 +41,13 @@ namespace MyAlbum.Web.Areas.Admin.Controllers
             return Ok(result);
         }
 
+        [HttpGet("items")]
+        public async Task<ActionResult<List<AlbumCategoryDto>>> GetItemListAsync([FromQuery] GetAlbumListReq req, CancellationToken ct = default)
+        {
+            var result = await _read.GetAlbumListItemAsync(req, ct);
+            return Ok(result);
+        }
+
         [HttpGet("{albumId:guid}")]
         public async Task<ActionResult<AlbumDto>> GetOne([FromRoute] Guid albumId, CancellationToken ct)
         {
@@ -63,31 +72,68 @@ namespace MyAlbum.Web.Areas.Admin.Controllers
                 Description = form.Description
             };
 
-            if (form.File is not null && form.File.Length > 0)
+            var files = form.Files?.Where(f => f is not null && f.Length > 0).ToList() ?? new List<IFormFile>();
+            var uploadFiles = new List<UploadFileStream>(files.Count);
+
+            if (files.Count == 0)
+                return BadRequest("至少要上傳 1 張圖片");
+
+            const int maxFiles = 1;
+            const long maxFileSize = 10 * 1024 * 1024;   // 單檔 10MB
+            const long maxTotalSize = 10 * 1024 * 1024; // 總量 10MB
+            var allowedExtensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+                {
+                    ".jpg", ".jpeg", ".png"
+                };
+
+            var allowedContentTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+                {
+                    "image/jpeg", "image/png"
+                };
+
+            if (files.Count > maxFiles)
+                return BadRequest($"最多允許上傳 {maxFiles} 個檔案");
+
+            long totalSize = 0;
+            try
             {
-                const long maxSize = 10 * 1024 * 1024; // 10MB
-                if (form.File.Length > maxSize)
-                    return BadRequest("檔案過大，限制 10MB");
+                foreach (var file in files)
+                {
+                    totalSize += file.Length;
+                    if (totalSize > maxTotalSize)
+                        return BadRequest($"總上傳大小不可超過 {maxTotalSize / (1024 * 1024)}MB");
 
-                var allowedExtensions = new[] { ".jpg", ".jpeg", ".png" };
-                var ext = Path.GetExtension(form.File.FileName).ToLowerInvariant();
-                if (!allowedExtensions.Contains(ext))
-                    return BadRequest("僅允許 jpg / png 格式");
+                    if (file.Length > maxFileSize)
+                        return BadRequest($"單檔不可超過 {maxFileSize / (1024 * 1024)}MB");
 
-                var allowedContentTypes = new[] { "image/jpeg", "image/png" };
-                if (!allowedContentTypes.Contains(form.File.ContentType))
-                    return BadRequest("檔案格式不正確");
+                    var ext = Path.GetExtension(file.FileName);
+                    if (string.IsNullOrWhiteSpace(ext) || !allowedExtensions.Contains(ext))
+                        return BadRequest($"不允許的副檔名：{ext}，僅允許 jpg/jpeg/png");
 
-                await using var ms = new MemoryStream();
-                await form.File.CopyToAsync(ms, ct);
+                    if (!allowedContentTypes.Contains(file.ContentType))
+                        return BadRequest($"不允許的 ContentType：{file.ContentType}");
 
-                req.FileBytes = ms.ToArray();
-                req.FileName = form.File.FileName;
-                //req.ContentType = form.File.ContentType;
+                    var stream = file.OpenReadStream();
+
+                    uploadFiles.Add(new UploadFileStream
+                    {
+                        FileName = file.FileName,
+                        ContentType = file.ContentType,
+                        Length = file.Length,
+                        Stream = stream
+                    });
+                }
+
+                var id = await _create.CreateAlbumAsync(req, uploadFiles, ct);
+                return Ok(id);
             }
-
-            var id = await _create.CreateAlbumAsync(req, ct);
-            return Ok(id);
+            finally
+            {
+                foreach (var f in uploadFiles)
+                {
+                    try { await f.Stream.DisposeAsync(); } catch { }
+                }
+            }
         }
 
         [HttpPut("{albumId:guid}")]
@@ -103,31 +149,74 @@ namespace MyAlbum.Web.Areas.Admin.Controllers
                 Description = form.Description,
                 Status = form.Status,
             };
-            if (form.File is not null && form.File.Length > 0)
+
+            var files = form.Files?.Where(f => f is not null && f.Length > 0).ToList() ?? new List<IFormFile>();
+            var uploadFiles = new List<UploadFileStream>(files.Count);
+
+            if (files.Count > 0)
             {
-                const long maxSize = 10 * 1024 * 1024; // 10MB
-                if (form.File.Length > maxSize)
-                    return BadRequest("檔案過大，限制 2MB");
+                const int maxFiles = 10;
+                const long maxFileSize = 10 * 1024 * 1024;   // 單檔 10MB
+                const long maxTotalSize = 50 * 1024 * 1024; // 總量 50MB
+                var allowedExtensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+                {
+                    ".jpg", ".jpeg", ".png"
+                };
 
-                var allowedExtensions = new[] { ".jpg", ".jpeg", ".png" };
-                var ext = Path.GetExtension(form.File.FileName).ToLowerInvariant();
-                if (!allowedExtensions.Contains(ext))
-                    return BadRequest("僅允許 jpg / png 格式");
+                var allowedContentTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+                {
+                    "image/jpeg", "image/png"
+                };
 
-                var allowedContentTypes = new[] { "image/jpeg", "image/png" };
-                if (!allowedContentTypes.Contains(form.File.ContentType))
-                    return BadRequest("檔案格式不正確");
+                if (files.Count > maxFiles)
+                    return BadRequest($"最多允許上傳 {maxFiles} 個檔案");
 
-                await using var ms = new MemoryStream();
-                await form.File.CopyToAsync(ms, ct);
+                long totalSize = 0;
+                try
+                {
+                    foreach (var file in files)
+                    {
+                        totalSize += file.Length;
+                        if (totalSize > maxTotalSize)
+                            return BadRequest($"總上傳大小不可超過 {maxTotalSize / (1024 * 1024)}MB");
 
-                req.FileBytes = ms.ToArray();
-                req.FileName = form.File.FileName;
-                //req.ContentType = form.File.ContentType;
+                        if (file.Length > maxFileSize)
+                            return BadRequest($"單檔不可超過 {maxFileSize / (1024 * 1024)}MB");
+
+                        var ext = Path.GetExtension(file.FileName);
+                        if (string.IsNullOrWhiteSpace(ext) || !allowedExtensions.Contains(ext))
+                            return BadRequest($"不允許的副檔名：{ext}，僅允許 jpg/jpeg/png");
+
+                        if (!allowedContentTypes.Contains(file.ContentType))
+                            return BadRequest($"不允許的 ContentType：{file.ContentType}");
+
+                        var stream = file.OpenReadStream();
+
+                        uploadFiles.Add(new UploadFileStream
+                        {
+                            FileName = file.FileName,
+                            ContentType = file.ContentType,
+                            Length = file.Length,
+                            Stream = stream
+                        });
+                    }
+
+                    var ok = await _update.UpdateAlbumAsync(req, uploadFiles, ct);
+                    return Ok(ok);
+                }
+                finally
+                {
+                    foreach (var f in uploadFiles)
+                    {
+                        try { await f.Stream.DisposeAsync(); } catch { }
+                    }
+                }
             }
-
-            var ok = await _update.UpdateAlbumAsync(req, ct);
-            return Ok(ok);
+            else
+            {
+                var ok = await _update.UpdateAlbumAsync(req, uploadFiles, ct);
+                return Ok(ok);
+            }
         }
 
         [HttpPatch("{albumId:guid}/status")]

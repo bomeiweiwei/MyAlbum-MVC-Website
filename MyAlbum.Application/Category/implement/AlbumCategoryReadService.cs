@@ -38,6 +38,7 @@ namespace MyAlbum.Application.Category.implement
                 pageSize = 99999,
                 Data = req
             };
+            //pageReq.Data.Status = Shared.Enums.Status.Active; // 由前端帶入
             var dataList = await GetAlbumCategoryListAsync(pageReq);
 
             var list = dataList.Data;
