@@ -8,6 +8,7 @@ namespace MyAlbum.Application.AlbumPhoto
 {
     public interface IMemberAlbumPhotoReadService
     {
+        Task<AlbumPhotoDto?> GetAlbumPhotoAsync(GetAlbumPhotoReq req, CancellationToken ct = default);
         Task<List<AlbumPhotoDto>> GetAlbumPhotoListAsync(GetAlbumPhotoReq req, CancellationToken ct = default);
     }
 }

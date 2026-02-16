@@ -58,6 +58,10 @@ namespace MyAlbum.Repository.Business.AlbumPhoto
             { 
                 query = query.Where(x => x.AlbumId == req.AlbumId.Value); 
             }
+            if (req.OwnerAccountId.HasValue)
+            {
+                query = query.Where(x => x.OwnerAccountId == req.OwnerAccountId.Value);
+            }
 
             //if (!string.IsNullOrWhiteSpace(req.FilePath)) { query = query.Where(m => m.FilePath.Contains(req.FilePath)); }
             //if (!string.IsNullOrWhiteSpace(req.OriginalFileName)) { query = query.Where(m => (m.OriginalFileName ?? "").Contains(req.OriginalFileName)); }

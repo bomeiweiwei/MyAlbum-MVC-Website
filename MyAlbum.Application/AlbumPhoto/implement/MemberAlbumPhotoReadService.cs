@@ -27,6 +27,18 @@ namespace MyAlbum.Application.AlbumPhoto.implement
             _paths = paths;
         }
 
+        public async Task<AlbumPhotoDto?> GetAlbumPhotoAsync(GetAlbumPhotoReq req, CancellationToken ct = default)
+        {
+            var operatorId = _currentUser.GetRequiredAccountId();
+
+            req.OwnerAccountId = operatorId;
+
+            var data = await _read.GetAlbumPhotoAsync(req, ct);
+            if (data != null)
+                data.PublicPathUrl = _paths.ToPublicUrl(data.PublicPathUrl);
+            return data;
+        }
+
         public async Task<List<AlbumPhotoDto>> GetAlbumPhotoListAsync(GetAlbumPhotoReq req, CancellationToken ct = default)
         {
             var operatorId = _currentUser.GetRequiredAccountId();
