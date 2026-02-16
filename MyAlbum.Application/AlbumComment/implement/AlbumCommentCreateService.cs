@@ -29,11 +29,12 @@ namespace MyAlbum.Application.AlbumComment.implement
 
             AlbumCommentCreateDto dto = new AlbumCommentCreateDto
             {
+                AlbumCommentId = Guid.NewGuid(),
                 AlbumPhotoId = req.AlbumPhotoId,
                 MemberId = req.MemberId,
                 Comment = req.Comment,
                 ReleaseTimeUtc = DateTime.UtcNow,
-                IsChanged = true,
+                IsChanged = false,
                 CreatedBy = operatorId,
                 CreatedAtUtc = DateTime.UtcNow,
             };
