@@ -96,7 +96,7 @@ namespace MyAlbum.Repository.Business.AlbumPhoto
                 from album in photoGroup.DefaultIfEmpty()
                 join member in db.Members.AsNoTracking() on album.OwnerAccountId equals member.AccountId into memberGroup
                 from member in memberGroup.DefaultIfEmpty()
-                orderby main.AlbumId, main.SortOrder
+                orderby main.AlbumId, main.SortOrder, main.CreatedAtUtc descending
                 select new AlbumPhotoDto
                 {
                     OwnerName = member.DisplayName,

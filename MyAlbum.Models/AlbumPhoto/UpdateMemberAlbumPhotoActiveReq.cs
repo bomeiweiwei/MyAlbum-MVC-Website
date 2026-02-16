@@ -3,11 +3,13 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Text;
 
-namespace MyAlbum.Models.Album
+namespace MyAlbum.Models.AlbumPhoto
 {
-    public class UpdateMemberAlbumActiveReq
+    public class UpdateMemberAlbumPhotoActiveReq
     {
-        [Required]
+        [Required] 
         public Guid AlbumId { get; set; }
+        [Required] 
+        public Guid AlbumPhotoId { get; set; }
     }
 }

@@ -1,0 +1,469 @@
+﻿@model IEnumerable<MyAlbum.Models.AlbumPhoto.AlbumPhotoDto>
+
+@{
+    ViewData["Title"] = "相片管理";
+    Layout = "~/Views/Shared/_MemberLayout.cshtml";
+}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="mb-0">@ViewData["Title"]</h3>
+    @{
+        var albumId = (Guid)ViewBag.AlbumId;
+        var data = Model.FirstOrDefault();
+        if (data != null)
+            albumId = data.AlbumId;
+    }
+    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createPhotosModal">
+        + 新增相片
+    </button>
+</div>
+
+<div class="row">
+    @foreach (var item in Model)
+    {
+        <div class="col-12 col-md-4 mb-3">
+            <div class="card" style="width:100%;">
+                <img class="card-img-top preview-img"
+                     src="@item.PublicPathUrl"
+                     data-full="@item.PublicPathUrl"
+                     style="height:240px; object-fit:cover; cursor:pointer;"
+                     alt="@item.Title">
+                <div class="card-body d-flex flex-column">
+                    <p class="card-text text-secondary mb-1">評論數量：@item.CommentNum</p>
+                    <p class="card-text text-secondary mb-1">發佈時間：@item.CreatedAtUtc.ToLocalTime()</p>
+                    <p class="card-text text-secondary mb-1">排序：@item.SortOrder</p>
+                    <p class="mb-3">
+                        狀態：
+                        @if (item.Status == MyAlbum.Shared.Enums.Status.Active)
+                        {
+                            <span class="badge bg-success">啟用</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">停用</span>
+                        }
+                    </p>
+
+                    <div class="mt-auto d-flex gap-2">
+                        <!-- 留言檢視按鈕 -->
+                        <a class="btn btn-outline-primary btn-sm"
+                           asp-area="Member"
+                           asp-controller="AlbumComment"
+                           asp-action="Index"
+                           asp-route-albumId="@item.AlbumId">
+                            留言檢視
+                        </a>
+                        <!-- 編輯 -->
+                        <button type="button"
+                                class="btn btn-sm btn-outline-primary btn-edit-photo"
+                                data-bs-toggle="modal"
+                                data-bs-target="#editPhotoModal"
+                                data-album-id="@albumId"
+                                data-photo-id="@item.AlbumPhotoId"
+                                data-img-url="@item.PublicPathUrl"
+                                data-status="@((int)item.Status)"
+                                data-sort="@item.SortOrder">
+                            編輯
+                        </button>
+                        @if (item.Status == MyAlbum.Shared.Enums.Status.Active)
+                        {
+                            <form asp-area="Member"
+                                  asp-controller="AlbumPhoto"
+                                  asp-action="Disable"
+                                  asp-route-albumPhotoId="@item.AlbumPhotoId"
+                                  asp-route-albumId="@item.AlbumId"
+                                  method="post"
+                                  class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <button type="submit"
+                                        class="btn btn-outline-danger btn-sm"
+                                        onclick="return confirm('確定要停用此相片嗎？');">
+                                    停用
+                                </button>
+                            </form>
+                        }
+                        else
+                        {
+                            <form asp-area="Member"
+                                  asp-controller="AlbumPhoto"
+                                  asp-action="Active"
+                                  asp-route-albumPhotoId="@item.AlbumPhotoId"
+                                  asp-route-albumId="@item.AlbumId"
+                                  method="post"
+                                  class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <button type="submit"
+                                        class="btn btn-outline-danger btn-sm">
+                                    啟用
+                                </button>
+                            </form>
+                        }
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<div class="modal fade" id="imageModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content bg-transparent border-0">
+            <img id="modalImage" class="w-100 rounded">
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="createPhotosModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content shadow-lg border-0 rounded-3">
+
+            <!-- Header -->
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold">
+                    <i class="bi bi-images me-2"></i>新增相片
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <!-- Body -->
+            <div class="modal-body pt-3">
+                <form id="createPhotosForm">
+
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" id="albumId" value="@albumId" />
+
+                    <!-- 檔案選擇區 -->
+                    <div class="upload-dropzone text-center p-4 mb-3 rounded-3">
+                        <i class="bi bi-cloud-upload fs-1 text-secondary"></i>
+                        <p class="mt-2 mb-2 text-secondary">
+                            拖曳圖片到此處或點擊選擇
+                        </p>
+                        <input id="photoFiles"
+                               type="file"
+                               multiple
+                               accept="image/*"
+                               class="form-control mt-2" />
+                        <small class="text-muted">
+                            支援 jpg / jpeg / png，單檔 10MB 以內
+                        </small>
+                    </div>
+
+                    <!-- 錯誤顯示 -->
+                    <div id="createErrors"
+                         class="alert alert-danger d-none rounded-3"></div>
+
+                    <!-- 預覽區 -->
+                    <div id="previewGrid" class="row g-3 mt-2"></div>
+
+                </form>
+            </div>
+
+            <!-- Footer -->
+            <div class="modal-footer border-0 pt-0">
+                <button type="button"
+                        class="btn btn-light"
+                        data-bs-dismiss="modal">
+                    取消
+                </button>
+
+                <button type="submit"
+                        form="createPhotosForm"
+                        class="btn btn-primary px-4">
+                    上傳圖片
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="editPhotoModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content shadow-lg border-0 rounded-3">
+
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold">編輯相片</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body pt-3">
+                <form id="editPhotoForm">
+                    @Html.AntiForgeryToken()
+
+                    <input type="hidden" id="editAlbumId" />
+                    <input type="hidden" id="editAlbumPhotoId" />
+
+                    <div class="row g-3">
+                        <div class="col-12 col-md-6">
+                            <div class="border rounded-3 p-2 bg-light">
+                                <div class="small text-muted mb-2">目前圖片</div>
+                                <img id="editCurrentImg" class="w-100 rounded" style="height:260px; object-fit:cover;" />
+                            </div>
+                        </div>
+
+                        <div class="col-12 col-md-6">
+                            <div class="mb-2">
+                                <label class="form-label">更換圖片（可不選）</label>
+                                <input id="editFile"
+                                       type="file"
+                                       class="form-control"
+                                       accept="image/*" />
+                                <div class="form-text">只允許上傳 1 張；不選代表不更換圖片。</div>
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label">排序</label>
+                                <input id="editSortOrder"
+                                       type="number"
+                                       class="form-control"
+                                       min="0"
+                                       step="1"
+                                       placeholder="例如 0 / 1 / 2 ..." />
+                                <div class="form-text">數字越小越前面。</div>
+                            </div>
+                            <!-- 你如果要可編輯狀態/排序，就放這 -->
+                            <div class="mb-2">
+                                <label class="form-label">狀態</label>
+                                <select id="editStatus" class="form-select">
+                                    <option value="1">啟用</option>
+                                    <option value="0">停用</option>
+                                </select>
+                            </div>
+
+                            <div id="editErrors" class="alert alert-danger d-none rounded-3 mt-2"></div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <div class="modal-footer border-0 pt-0">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">取消</button>
+                <button type="submit" form="editPhotoForm" class="btn btn-primary px-4">儲存</button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<style>
+    .upload-dropzone {
+        border: 2px dashed #dee2e6;
+        background-color: #f8f9fa;
+        transition: all .2s ease;
+    }
+
+        .upload-dropzone:hover {
+            border-color: #0d6efd;
+            background-color: #eef4ff;
+        }
+
+    #previewGrid img {
+        width: 100%;
+        height: 160px;
+        object-fit: cover;
+        border-radius: 8px;
+    }
+</style>
+
+<script>
+    // AlbumPhoto圖片預覽 Modal===
+    document.querySelectorAll('.preview-img').forEach(img => {
+        img.addEventListener('click', function () {
+            const fullImageUrl = this.dataset.full;
+            document.getElementById('modalImage').src = fullImageUrl;
+
+            const modal = new bootstrap.Modal(document.getElementById('imageModal'));
+            modal.show();
+        });
+    });
+    // AlbumPhoto圖片預覽 Modal===
+
+
+    // CreatePhotos 圖片預覽===
+    const fileInput = document.getElementById("photoFiles");
+    const previewGrid = document.getElementById("previewGrid");
+
+    fileInput?.addEventListener("change", function () {
+        previewGrid.innerHTML = "";
+
+        Array.from(this.files).forEach(file => {
+            if (!file.type.startsWith("image/")) return;
+
+            const url = URL.createObjectURL(file);
+
+            const col = document.createElement("div");
+            col.className = "col-6 col-md-3";
+
+            col.innerHTML = `
+                <div class="position-relative">
+                    <img src="${url}">
+                    <div class="small text-truncate mt-1 text-center">
+                        ${file.name}
+                    </div>
+                </div>
+            `;
+
+            previewGrid.appendChild(col);
+        });
+    });
+    // CreatePhotos 圖片預覽===
+
+
+    // CreatePhotos 上傳處理===
+    const formEl = document.getElementById('createPhotosForm');
+    const filesEl = document.getElementById('photoFiles');
+    const albumIdEl = document.getElementById('albumId');
+    const errBox = document.getElementById('createErrors');
+
+    function showErrors(errors) {
+      // errors: { "Files[0]": ["..."], "Files[1]": ["..."], "Files": ["..."] }
+      const lines = [];
+      for (const key in errors) {
+        for (const msg of (errors[key] || [])) {
+          lines.push(`${key}: ${msg}`);
+        }
+      }
+      errBox.innerHTML = lines.map(x => `<div>${x}</div>`).join('');
+      errBox.classList.remove('d-none');
+    }
+
+    function clearErrors() {
+      errBox.innerHTML = '';
+      errBox.classList.add('d-none');
+    }
+
+    formEl.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      clearErrors();
+
+      const albumId = albumIdEl.value;
+      const files = filesEl.files;
+
+      if (!files || files.length === 0) {
+        showErrors({ Files: ["請選擇至少 1 張圖片"] });
+        return;
+      }
+
+      const fd = new FormData();
+      fd.append("AlbumId", albumId);
+      for (const f of files) {
+        fd.append("Files", f); // 這個 key 必須是 Files，對應後端 model.Files
+      }
+
+      // Anti-forgery token（MVC 必要）
+      const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+
+      try {
+        const url = `@Url.Action("CreatePhotos", "AlbumPhoto", new { area = "Member" })`;
+
+        await axios.post(url, fd, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+            'RequestVerificationToken': token
+          }
+        });
+
+        const modalEl = document.getElementById('createPhotosModal');
+        bootstrap.Modal.getInstance(modalEl)?.hide();
+
+        filesEl.value = "";
+        location.reload();
+
+      } catch (err) {
+        // 400: 顯示後端回傳 errors
+        const resp = err?.response;
+        if (resp && resp.status === 400 && resp.data && resp.data.errors) {
+          showErrors(resp.data.errors);
+          return;
+        }
+        // 其他錯誤
+        showErrors({ Error: ["上傳失敗，請稍後再試"] });
+        console.error(err);
+      }
+    });
+    // CreatePhotos 上傳處理===
+
+    // EditPhoto 上傳處理===
+    const editModalEl = document.getElementById('editPhotoModal');
+    const editFormEl  = document.getElementById('editPhotoForm');
+
+    const editAlbumIdEl      = document.getElementById('editAlbumId');
+    const editAlbumPhotoIdEl = document.getElementById('editAlbumPhotoId');
+    const editCurrentImgEl   = document.getElementById('editCurrentImg');
+    const editSortOrderEl = document.getElementById('editSortOrder');
+    const editFileEl         = document.getElementById('editFile');
+    const editStatusEl       = document.getElementById('editStatus');
+    const editErrBox         = document.getElementById('editErrors');
+
+    function showEditErrors(errors) {
+      const lines = [];
+      for (const key in errors) {
+        for (const msg of (errors[key] || [])) lines.push(`${key}: ${msg}`);
+      }
+      editErrBox.innerHTML = lines.map(x => `<div>${x}</div>`).join('');
+      editErrBox.classList.remove('d-none');
+    }
+
+    function clearEditErrors() {
+      editErrBox.innerHTML = '';
+      editErrBox.classList.add('d-none');
+    }
+
+    // 1) 點擊每筆「編輯」按鈕 → 帶資料進 modal
+    document.querySelectorAll('.btn-edit-photo').forEach(btn => {
+      btn.addEventListener('click', () => {
+        clearEditErrors();
+
+        editAlbumIdEl.value      = btn.dataset.albumId;
+        editAlbumPhotoIdEl.value = btn.dataset.photoId;
+        editCurrentImgEl.src     = btn.dataset.imgUrl || '';
+        editSortOrderEl.value = btn.dataset.sort ?? "0";
+
+        editFileEl.value = '';              // 清掉上一筆選檔
+        editStatusEl.value = btn.dataset.status ?? "1"; // 如果你有 status 就帶
+        // editStatusEl.value = "1";           // 沒有就先預設
+      });
+    });
+
+    // 2) 送出：FormData（File 可不帶）
+    editFormEl.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      clearEditErrors();
+
+      const fd = new FormData();
+      fd.append("AlbumId", editAlbumIdEl.value);
+      fd.append("AlbumPhotoId", editAlbumPhotoIdEl.value);
+      fd.append("SortOrder", editSortOrderEl.value);
+      fd.append("Status", editStatusEl.value);
+
+      const file = editFileEl.files?.[0];
+      if (file) {
+        fd.append("File", file); // 單檔：key 用 File
+      }
+
+      const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+
+      try {
+        const url = `@Url.Action("UpdatePhoto", "AlbumPhoto", new { area = "Member" })`;
+
+        await axios.post(url, fd, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+            'RequestVerificationToken': token
+          }
+        });
+
+        bootstrap.Modal.getInstance(editModalEl)?.hide();
+        location.reload();
+
+      } catch (err) {
+        const resp = err?.response;
+        if (resp && resp.status === 400 && resp.data?.errors) {
+          showEditErrors(resp.data.errors);
+          return;
+        }
+        showEditErrors({ Error: ["儲存失敗，請稍後再試"] });
+        console.error(err);
+      }
+    });
+    // EditPhoto 上傳處理===
+</script>
