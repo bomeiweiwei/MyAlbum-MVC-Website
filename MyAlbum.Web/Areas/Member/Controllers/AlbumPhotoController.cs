@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using MyAlbum.Application.AlbumPhoto;
+using MyAlbum.Infrastructure.EF.Models;
 using MyAlbum.Models.Album;
 using MyAlbum.Models.AlbumPhoto;
 using MyAlbum.Models.UploadFiles;
@@ -129,6 +130,106 @@ namespace MyAlbum.Web.Areas.Member.Controllers
                 {
                     try { await f.Stream.DisposeAsync(); } catch { }
                 }
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UpdatePhoto([FromForm] UpdateAlbumPhotoViewModel model, CancellationToken ct)
+        {
+            List<IFormFile> files = new List<IFormFile>();
+            if (model.File != null && model.File.Length > 0)
+            {
+                files.Add(model.File);
+
+                var allowedExtensions = new[] { ".jpg", ".jpeg", ".png" };
+                var allowedContentTypes = new[] { "image/jpeg", "image/png" };
+                const long maxSize = 10 * 1024 * 1024; // 10MB
+
+                for (int i = 0; i < files.Count; i++)
+                {
+                    var file = files[i];
+
+                    if (file == null || file.Length == 0)
+                    {
+                        ModelState.AddModelError($"Files[{i}]", "檔案不可為空");
+                        continue;
+                    }
+
+                    var ext = Path.GetExtension(file.FileName)?.ToLowerInvariant();
+                    if (string.IsNullOrWhiteSpace(ext) || !allowedExtensions.Contains(ext))
+                    {
+                        ModelState.AddModelError($"Files[{i}]", $"不允許的副檔名：{ext}，僅允許 jpg/jpeg/png");
+                        continue;
+                    }
+
+                    if (!allowedContentTypes.Contains(file.ContentType))
+                    {
+                        ModelState.AddModelError($"Files[{i}]", "檔案格式不正確");
+                        continue;
+                    }
+
+                    if (file.Length > maxSize)
+                    {
+                        ModelState.AddModelError($"Files[{i}]", "檔案大小超過 10MB");
+                        continue;
+                    }
+                }
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(new
+                {
+                    message = "驗證失敗",
+                    errors = ModelState.ToDictionary(
+                        kvp => kvp.Key,
+                        kvp => kvp.Value?.Errors.Select(e => e.ErrorMessage).ToArray() ?? Array.Empty<string>()
+                    )
+                });
+            }
+
+            List<UploadFileStream> uploadFiles = new List<UploadFileStream>();
+
+            UpdateAlbumPhotoReq req = new UpdateAlbumPhotoReq();
+            // 防止隨便改 body 的 id
+            req.AlbumPhotoId = model.AlbumPhotoId;
+            req.AlbumId = model.AlbumId;
+            req.SortOrder = model.SortOrder;
+            req.Status = model.Status;
+            if (files.Count > 0)
+            {
+                uploadFiles = new List<UploadFileStream>(files.Count);
+                try
+                {
+                    foreach (var file in files)
+                    {
+                        var stream = file.OpenReadStream();
+
+                        uploadFiles.Add(new UploadFileStream
+                        {
+                            FileName = file.FileName,
+                            ContentType = file.ContentType,
+                            Length = file.Length,
+                            Stream = stream
+                        });
+                    }
+
+                    var ok = await _update.UpdateAlbumPhotoAsync(req, uploadFiles, ct);
+                    return Ok(new { ok = true });
+                }
+                finally
+                {
+                    foreach (var f in uploadFiles)
+                    {
+                        try { await f.Stream.DisposeAsync(); } catch { }
+                    }
+                }
+            }
+            else
+            {
+                var ok = await _update.UpdateAlbumPhotoAsync(req, uploadFiles, ct);
+                return Ok(new { ok = true });
             }
         }
 
