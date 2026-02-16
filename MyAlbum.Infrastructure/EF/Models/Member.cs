@@ -28,8 +28,4 @@ public partial class Member
     public virtual Account Account { get; set; } = null!;
 
     public virtual ICollection<AlbumComment> AlbumComments { get; set; } = new List<AlbumComment>();
-
-    public virtual Account CreatedByNavigation { get; set; } = null!;
-
-    public virtual Account UpdatedByNavigation { get; set; } = null!;
 }

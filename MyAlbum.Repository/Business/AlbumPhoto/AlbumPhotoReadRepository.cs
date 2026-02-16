@@ -73,6 +73,13 @@ namespace MyAlbum.Repository.Business.AlbumPhoto
             }
 
             result = await query.FirstOrDefaultAsync(ct);
+
+            if (result != null)
+            {
+                result.CreatedAtUtc = DateTime.SpecifyKind(result.CreatedAtUtc, DateTimeKind.Utc);
+                result.UpdatedAtUtc = DateTime.SpecifyKind(result.UpdatedAtUtc, DateTimeKind.Utc);
+            }
+
             return result;
         }
 
@@ -89,7 +96,7 @@ namespace MyAlbum.Repository.Business.AlbumPhoto
                 from album in photoGroup.DefaultIfEmpty()
                 join member in db.Members.AsNoTracking() on album.OwnerAccountId equals member.AccountId into memberGroup
                 from member in memberGroup.DefaultIfEmpty()
-                orderby main.AlbumId, main.SortOrder
+                orderby main.AlbumId, main.SortOrder, main.CreatedAtUtc descending
                 select new AlbumPhotoDto
                 {
                     OwnerName = member.DisplayName,
@@ -135,8 +142,14 @@ namespace MyAlbum.Repository.Business.AlbumPhoto
                 query = query.Where(x => x.Status == req.Data.Status.Value); 
             }
 
-            result.Count = await query.CountAsync();
+            result.Count = await query.CountAsync(ct);
             result.Data = await query.Skip((req.pageIndex - 1) * req.pageSize).Take(req.pageSize).AsNoTracking().ToListAsync(ct);
+
+            foreach (var item in result.Data)
+            {
+                item.CreatedAtUtc = DateTime.SpecifyKind(item.CreatedAtUtc, DateTimeKind.Utc);
+                item.UpdatedAtUtc = DateTime.SpecifyKind(item.UpdatedAtUtc, DateTimeKind.Utc);
+            }
 
             return result;
         }
