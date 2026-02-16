@@ -1,0 +1,42 @@
+﻿@model IEnumerable<MyAlbum.Models.AlbumPhoto.AlbumPhotoDto>
+
+@{
+    ViewData["Title"] = "相片管理";
+    Layout = "~/Views/Shared/_MemberLayout.cshtml";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="mb-0">@ViewData["Title"]</h3>
+</div>
+
+<div class="row">
+    @foreach (var item in Model)
+    {
+        <div class="col-12 col-md-4 mb-3">
+            <div class="card" style="width:100%;">
+                <img class="card-img-top"
+                     src="@item.PublicPathUrl"
+                     style="height:240px; object-fit:cover;"
+                     alt="@item.Title">
+                <div class="card-body d-flex flex-column">
+                    <p class="card-text text-secondary mb-1">評論數量：@item.CommentNum</p>
+                    <p class="card-text text-secondary mb-3">發佈時間：@item.CreatedAtUtc.ToLocalTime()</p>
+                    <p class="mb-3">
+                        狀態：
+                        @if (item.Status == MyAlbum.Shared.Enums.Status.Active)
+                        {
+                            <span class="badge bg-success">啟用</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">停用</span>
+                        }
+                    </p>
+
+                   
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
