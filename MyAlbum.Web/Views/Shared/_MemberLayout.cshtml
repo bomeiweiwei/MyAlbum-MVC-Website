@@ -22,7 +22,9 @@
                 </button>
                 <div class="collapse navbar-collapse" id="navbarSupportedContent">
                     <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                        
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-area="Member" asp-controller="Album" asp-action="Index">相簿管理</a>
+                        </li>
                     </ul>
                     @await Html.PartialAsync("_MemberLoginPartial")
                 </div>
