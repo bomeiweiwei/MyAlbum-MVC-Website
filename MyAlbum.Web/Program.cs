@@ -97,7 +97,19 @@ app.UseStaticFiles();
 var uploadRoot = builder.Configuration["Upload:RootPath"];
 if (!string.IsNullOrWhiteSpace(uploadRoot))
 {
+    if (!Path.IsPathRooted(uploadRoot))
+        throw new InvalidOperationException($"Upload:RootPath must be absolute. Current: {uploadRoot}");
+
     Directory.CreateDirectory(uploadRoot);
+
+    var memberRoot = builder.Configuration["Upload:MemberImgRoot"] ?? "MemberImages";
+    var coverRoot = builder.Configuration["Upload:CoverImgRoot"] ?? "CoverImages";
+    var photoRoot = builder.Configuration["Upload:PhotoImgRoot"] ?? "PhotoImages";
+
+    Directory.CreateDirectory(Path.Combine(uploadRoot, memberRoot));
+    Directory.CreateDirectory(Path.Combine(uploadRoot, coverRoot));
+    Directory.CreateDirectory(Path.Combine(uploadRoot, photoRoot));
+
     app.UseStaticFiles(new StaticFileOptions
     {
         FileProvider = new PhysicalFileProvider(uploadRoot),

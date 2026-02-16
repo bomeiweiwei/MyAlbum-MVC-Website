@@ -1,0 +1,68 @@
+﻿@model MyAlbum.Web.Models.Album.CreateAlbumViewModel
+@using MyAlbum.Models.Category
+@{
+    ViewData["Title"] = "新增相簿";
+    Layout = "~/Views/Shared/_MemberLayout.cshtml";
+}
+
+<form asp-action="Create"
+      method="post"
+      enctype="multipart/form-data">
+
+    @Html.AntiForgeryToken()
+
+    <!-- 類別 -->
+    <div class="mb-3">
+        <label class="form-label">相簿類別</label>
+
+        @* <select asp-for="AlbumCategoryId" class="form-select">
+            <option value="">-- 請選擇類別 --</option>
+
+            @foreach (var item in Model.CategoryList)
+            {
+                <option value="@item.AlbumCategoryId">
+                    @item.CategoryName
+                </option>
+            }
+        </select> *@
+        <select asp-for="AlbumCategoryId"
+                asp-items="@(new SelectList(Model.CategoryList, nameof(AlbumCategoryDto.AlbumCategoryId), nameof(AlbumCategoryDto.CategoryName)))"
+                class="form-select">
+            <option value="">-- 請選擇類別 --</option>
+        </select>
+
+        <span asp-validation-for="AlbumCategoryId" class="text-danger"></span>
+    </div>
+
+    <!-- 標題 -->
+    <div class="mb-3">
+        <label class="form-label">標題</label>
+        <input asp-for="Title" class="form-control" />
+        <span asp-validation-for="Title" class="text-danger"></span>
+    </div>
+
+    <!-- 描述 -->
+    <div class="mb-3">
+        <label class="form-label">描述</label>
+        <textarea asp-for="Description"
+                  class="form-control"
+                  rows="4"></textarea>
+    </div>
+
+    <!-- 單檔上傳 -->
+    <div class="mb-3">
+        <label class="form-label">封面圖片</label>
+        <input asp-for="File"
+               type="file"
+               class="form-control"
+               accept=".jpg,.jpeg,.png" />
+        <span asp-validation-for="File" class="text-danger"></span>
+    </div>
+
+    <button type="submit" class="btn btn-primary">建立</button>
+    <a asp-action="Index" class="btn btn-secondary">返回</a>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

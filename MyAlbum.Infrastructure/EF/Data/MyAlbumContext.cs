@@ -47,16 +47,6 @@ public partial class MyAlbumContext : DbContext
                 .HasPrecision(3)
                 .HasDefaultValueSql("(sysutcdatetime())", "DF_Account_UpdatedAtUtc");
             entity.Property(e => e.UserName).HasMaxLength(50);
-
-            entity.HasOne(d => d.CreatedByNavigation).WithMany(p => p.InverseCreatedByNavigation)
-                .HasForeignKey(d => d.CreatedBy)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_Account_CreatedBy");
-
-            entity.HasOne(d => d.UpdatedByNavigation).WithMany(p => p.InverseUpdatedByNavigation)
-                .HasForeignKey(d => d.UpdatedBy)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_Account_UpdatedBy");
         });
 
         modelBuilder.Entity<Album>(entity =>
@@ -85,20 +75,10 @@ public partial class MyAlbumContext : DbContext
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Album_AlbumCategory");
 
-            entity.HasOne(d => d.CreatedByNavigation).WithMany(p => p.AlbumCreatedByNavigations)
-                .HasForeignKey(d => d.CreatedBy)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_Album_CreatedBy");
-
-            entity.HasOne(d => d.OwnerAccount).WithMany(p => p.AlbumOwnerAccounts)
+            entity.HasOne(d => d.OwnerAccount).WithMany(p => p.Albums)
                 .HasForeignKey(d => d.OwnerAccountId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Album_Owner");
-
-            entity.HasOne(d => d.UpdatedByNavigation).WithMany(p => p.AlbumUpdatedByNavigations)
-                .HasForeignKey(d => d.UpdatedBy)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_Album_UpdatedBy");
         });
 
         modelBuilder.Entity<AlbumCategory>(entity =>
@@ -116,16 +96,6 @@ public partial class MyAlbumContext : DbContext
             entity.Property(e => e.UpdatedAtUtc)
                 .HasPrecision(3)
                 .HasDefaultValueSql("(sysutcdatetime())", "DF_AlbumCategory_UpdatedAtUtc");
-
-            entity.HasOne(d => d.CreatedByNavigation).WithMany(p => p.AlbumCategoryCreatedByNavigations)
-                .HasForeignKey(d => d.CreatedBy)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_AlbumCategory_CreatedBy");
-
-            entity.HasOne(d => d.UpdatedByNavigation).WithMany(p => p.AlbumCategoryUpdatedByNavigations)
-                .HasForeignKey(d => d.UpdatedBy)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_AlbumCategory_UpdatedBy");
         });
 
         modelBuilder.Entity<AlbumComment>(entity =>
@@ -152,20 +122,10 @@ public partial class MyAlbumContext : DbContext
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_AlbumComment_AlbumPhoto");
 
-            entity.HasOne(d => d.CreatedByNavigation).WithMany(p => p.AlbumCommentCreatedByNavigations)
-                .HasForeignKey(d => d.CreatedBy)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_AlbumComment_CreatedBy");
-
             entity.HasOne(d => d.Member).WithMany(p => p.AlbumComments)
                 .HasForeignKey(d => d.MemberId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_AlbumComment_Member");
-
-            entity.HasOne(d => d.UpdatedByNavigation).WithMany(p => p.AlbumCommentUpdatedByNavigations)
-                .HasForeignKey(d => d.UpdatedBy)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_AlbumComment_UpdatedBy");
         });
 
         modelBuilder.Entity<AlbumPhoto>(entity =>
@@ -190,16 +150,6 @@ public partial class MyAlbumContext : DbContext
                 .HasForeignKey(d => d.AlbumId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_AlbumPhoto_Album");
-
-            entity.HasOne(d => d.CreatedByNavigation).WithMany(p => p.AlbumPhotoCreatedByNavigations)
-                .HasForeignKey(d => d.CreatedBy)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_AlbumPhoto_CreatedBy");
-
-            entity.HasOne(d => d.UpdatedByNavigation).WithMany(p => p.AlbumPhotoUpdatedByNavigations)
-                .HasForeignKey(d => d.UpdatedBy)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_AlbumPhoto_UpdatedBy");
         });
 
         modelBuilder.Entity<Employee>(entity =>
@@ -219,20 +169,10 @@ public partial class MyAlbumContext : DbContext
                 .HasPrecision(3)
                 .HasDefaultValueSql("(sysutcdatetime())", "DF_Employee_UpdatedAtUtc");
 
-            entity.HasOne(d => d.Account).WithOne(p => p.EmployeeAccount)
+            entity.HasOne(d => d.Account).WithOne(p => p.Employee)
                 .HasForeignKey<Employee>(d => d.AccountId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Employee_Account");
-
-            entity.HasOne(d => d.CreatedByNavigation).WithMany(p => p.EmployeeCreatedByNavigations)
-                .HasForeignKey(d => d.CreatedBy)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_Employee_CreatedBy");
-
-            entity.HasOne(d => d.UpdatedByNavigation).WithMany(p => p.EmployeeUpdatedByNavigations)
-                .HasForeignKey(d => d.UpdatedBy)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_Employee_UpdatedBy");
         });
 
         modelBuilder.Entity<Member>(entity =>
@@ -253,20 +193,10 @@ public partial class MyAlbumContext : DbContext
                 .HasPrecision(3)
                 .HasDefaultValueSql("(sysutcdatetime())", "DF_Member_UpdatedAtUtc");
 
-            entity.HasOne(d => d.Account).WithOne(p => p.MemberAccount)
+            entity.HasOne(d => d.Account).WithOne(p => p.Member)
                 .HasForeignKey<Member>(d => d.AccountId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Member_Account");
-
-            entity.HasOne(d => d.CreatedByNavigation).WithMany(p => p.MemberCreatedByNavigations)
-                .HasForeignKey(d => d.CreatedBy)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_Member_CreatedBy");
-
-            entity.HasOne(d => d.UpdatedByNavigation).WithMany(p => p.MemberUpdatedByNavigations)
-                .HasForeignKey(d => d.UpdatedBy)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_Member_UpdatedBy");
         });
 
         OnModelCreatingPartial(modelBuilder);

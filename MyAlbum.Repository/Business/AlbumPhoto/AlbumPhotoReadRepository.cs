@@ -58,6 +58,10 @@ namespace MyAlbum.Repository.Business.AlbumPhoto
             { 
                 query = query.Where(x => x.AlbumId == req.AlbumId.Value); 
             }
+            if (req.OwnerAccountId.HasValue)
+            {
+                query = query.Where(x => x.OwnerAccountId == req.OwnerAccountId.Value);
+            }
 
             //if (!string.IsNullOrWhiteSpace(req.FilePath)) { query = query.Where(m => m.FilePath.Contains(req.FilePath)); }
             //if (!string.IsNullOrWhiteSpace(req.OriginalFileName)) { query = query.Where(m => (m.OriginalFileName ?? "").Contains(req.OriginalFileName)); }
@@ -96,7 +100,7 @@ namespace MyAlbum.Repository.Business.AlbumPhoto
                 from album in photoGroup.DefaultIfEmpty()
                 join member in db.Members.AsNoTracking() on album.OwnerAccountId equals member.AccountId into memberGroup
                 from member in memberGroup.DefaultIfEmpty()
-                orderby main.AlbumId, main.SortOrder
+                orderby main.AlbumId, main.SortOrder, main.CreatedAtUtc descending
                 select new AlbumPhotoDto
                 {
                     OwnerName = member.DisplayName,
