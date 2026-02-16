@@ -9,10 +9,8 @@ namespace MyAlbum.Models.AlbumComment
     {
         [Required]
         public Guid AlbumPhotoId { get; set; }
-
         [Required]
         public Guid MemberId { get; set; }
-
         [Required]
         public string Comment { get; set; } = null!;
     }

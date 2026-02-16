@@ -80,6 +80,7 @@ namespace MyAlbum.Repository.Business.MemberAccount
                         join account in db.Accounts.AsNoTracking() on member.AccountId equals account.AccountId
                         where
                             account.AccountType == (int)AccountType.Member
+                        orderby member.CreatedAtUtc descending
                         select new MemberAccountDto()
                         {
                             MemberId = member.MemberId,
@@ -100,7 +101,7 @@ namespace MyAlbum.Repository.Business.MemberAccount
             if (req.Data.Status.HasValue)
                 query = query.Where(x => x.Status == req.Data.Status);
 
-            result.Count = await query.CountAsync();
+            result.Count = await query.CountAsync(ct);
             result.Data = await query.Skip((req.pageIndex - 1) * req.pageSize).Take(req.pageSize).AsNoTracking().ToListAsync(ct);
 
             return result;

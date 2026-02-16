@@ -10,10 +10,14 @@ namespace MyAlbum.Models.AlbumComment
         // 檢查欄位（更新前需確認資料存在）
         public Guid AlbumCommentId { get; set; }
 
+        public Guid MemberId { get; set; }
+
         // 可更新欄位
         public Status Status { get; set; }
 
         public DateTime UpdatedAtUtc { get; set; } = DateTime.UtcNow;
         public Guid UpdatedBy { get; set; }
+
+        public bool UpdateByMember { get; set; } = true;
     }
 }

@@ -6,6 +6,7 @@ using MyAlbum.Domain.MemberAccount;
 using MyAlbum.Models.Base;
 using MyAlbum.Models.EmployeeAccount;
 using MyAlbum.Models.MemberAccount;
+using MyAlbum.Shared.Enums;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -45,5 +46,30 @@ namespace MyAlbum.Application.MemberAccount.implement
             }
             return list;
         }
+
+        public async Task<List<MemberAccountDto>> GetMemberAccountItemListAsync(GetMemberAccountListReq req, CancellationToken ct = default)
+        {
+            req.Status = Status.Active;
+            var pageReq = new PageRequestBase<GetMemberAccountListReq>()
+            {
+                pageIndex = 1,
+                pageSize = 99999,
+                Data = req
+            };
+            //pageReq.Data.Status = Status.Active; // 由前端帶入
+            var dataList = await GetMemberAccountListAsync(pageReq);
+
+            var list = dataList.Data;
+            list = list.Select(m => new MemberAccountDto
+            {
+                AccountId = m.AccountId,
+                UserName = m.UserName,
+                DisplayName = m.DisplayName,
+                Status = m.Status
+            }).ToList();
+
+            return list;
+        }
+
     }
 }

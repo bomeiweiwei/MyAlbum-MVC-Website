@@ -11,13 +11,13 @@ namespace MyAlbum.Models.AlbumPhoto
 
         public Guid AlbumId { get; set; }
 
-        public string FilePath { get; set; } = null!;
+        public string? FilePath { get; set; } = null!;
 
         public string? OriginalFileName { get; set; }
 
         public string? ContentType { get; set; }
 
-        public long FileSizeBytes { get; set; }
+        public long? FileSizeBytes { get; set; }
 
         public int SortOrder { get; set; }
 
@@ -26,5 +26,8 @@ namespace MyAlbum.Models.AlbumPhoto
         public DateTime UpdatedAtUtc { get; set; } = DateTime.UtcNow;
 
         public Guid UpdatedBy { get; set; }
+
+        public bool UpdateByMember { get; set; } = true;
+        public Guid OwnerAccountId { get; set; }
     }
 }

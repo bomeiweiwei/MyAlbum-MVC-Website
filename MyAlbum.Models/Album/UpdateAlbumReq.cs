@@ -12,6 +12,8 @@ namespace MyAlbum.Models.Album
         public Guid AlbumId { get; set; }
         [Required]
         public Guid AlbumCategoryId { get; set; }
+        [Required]
+        public Guid OwnerAccountId { get; set; }
 
         [Required(ErrorMessage = "標題必填")]
         [StringLength(100, MinimumLength = 1, ErrorMessage = "標題必填長度需介於 1~100")]
