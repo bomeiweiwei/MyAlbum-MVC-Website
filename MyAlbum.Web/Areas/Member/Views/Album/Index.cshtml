@@ -51,7 +51,14 @@
                            asp-route-albumId="@item.AlbumId">
                             圖片管理
                         </a>
-
+                        <!-- 編輯 -->
+                        <a class="btn btn-outline-secondary btn-sm"
+                           asp-area="Member"
+                           asp-controller="Album"
+                           asp-action="Edit"
+                           asp-route-albumId="@item.AlbumId">
+                            編輯
+                        </a>
                         @if (item.Status == MyAlbum.Shared.Enums.Status.Active)
                         {
                             <form asp-area="Member"

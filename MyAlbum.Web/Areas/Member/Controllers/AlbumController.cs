@@ -126,6 +126,108 @@ namespace MyAlbum.Web.Areas.Member.Controllers
             return RedirectToAction(nameof(Index));
         }
 
+        public async Task<IActionResult> Edit(Guid albumId, CancellationToken ct)
+        {
+            GetAlbumReq req = new GetAlbumReq
+            {
+                AlbumId = albumId
+            };
+            // 1) 取相簿資料
+            var album = await _read.GetAlbumAsync(req, ct);
+            if (album is null) return NotFound();
+
+            var categories = await _categoryRead.GetAlbumCategoryItemListAsync(
+                new GetAlbumCategoryListReq { Status = Shared.Enums.Status.Active }, ct);
+            var vm = new UpdateAlbumViewModel
+            {
+                AlbumId = album.AlbumId,
+                AlbumCategoryId = album.AlbumCategoryId,
+                Title = album.Title,
+                Description = album.Description,
+                CategoryList = categories
+            };
+            return View(vm);
+        }
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(UpdateAlbumViewModel model, CancellationToken ct)
+        {
+            if (!ModelState.IsValid)
+            {
+                await ReloadCategories(model, ct);
+                return View(model);
+            }
+
+            var accountIdValue = User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (!Guid.TryParse(accountIdValue, out var accountId))
+                return Unauthorized();
+
+            // 1) 組更新 req（不含檔案）
+            var req = new UpdateAlbumReq
+            {
+                AlbumId = model.AlbumId,
+                AlbumCategoryId = model.AlbumCategoryId,
+                OwnerAccountId = accountId,
+                Title = model.Title,
+                Description = model.Description,
+            };
+
+            // 2) 有選檔才處理檔案更新
+            IReadOnlyList<UploadFileStream>? files = null;
+
+            if (model.File is not null && model.File.Length > 0)
+            {
+                // 3) 檔案規則
+                const long maxSize = 10 * 1024 * 1024; // 10MB
+                if (model.File.Length > maxSize)
+                {
+                    ModelState.AddModelError(nameof(model.File), "檔案過大，限制 10MB");
+                    return View(model);
+                }
+
+                var allowedExt = new[] { ".jpg", ".jpeg", ".png" };
+                var ext = Path.GetExtension(model.File.FileName).ToLowerInvariant();
+                if (!allowedExt.Contains(ext))
+                {
+                    ModelState.AddModelError(nameof(model.File), "僅允許 jpg / jpeg / png");
+                    return View(model);
+                }
+
+                var allowedContentTypes = new[] { "image/jpeg", "image/png" };
+                if (!allowedContentTypes.Contains(model.File.ContentType))
+                {
+                    ModelState.AddModelError(nameof(model.File), "檔案格式不正確");
+                    return View(model);
+                }
+
+                await using var stream = model.File.OpenReadStream();
+                files = new List<UploadFileStream>
+                {
+                    new UploadFileStream
+                    {
+                        FileName = model.File.FileName,
+                        ContentType = model.File.ContentType,
+                        Length = model.File.Length,
+                        Stream = stream
+                    }
+                };
+                await _update.UpdateAlbumAsync(req, files, ct);
+            }
+            else
+            {
+                IReadOnlyList<UploadFileStream> emptyfiles=new List<UploadFileStream>(); 
+                await _update.UpdateAlbumAsync(req, emptyfiles, ct); // 代表不更新封面
+            }
+
+            TempData["Success"] = "相簿已更新";
+            return RedirectToAction(nameof(Index));
+        }
+
+        private async Task ReloadCategories(UpdateAlbumViewModel model, CancellationToken ct)
+        {
+            model.CategoryList = await _categoryRead.GetAlbumCategoryItemListAsync(
+                new GetAlbumCategoryListReq { Status = Shared.Enums.Status.Active }, ct);
+        }
 
         private async Task ReloadCategories(CreateAlbumViewModel model)
         {

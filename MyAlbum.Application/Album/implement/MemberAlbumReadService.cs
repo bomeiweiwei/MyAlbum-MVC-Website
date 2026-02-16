@@ -3,6 +3,7 @@ using MyAlbum.Domain;
 using MyAlbum.Domain.Album;
 using MyAlbum.Models.Album;
 using MyAlbum.Models.Base;
+using MyAlbum.Shared.Enums;
 using MyAlbum.Shared.Extensions;
 using MyAlbum.Shared.Idenyity;
 using System;
@@ -28,6 +29,17 @@ namespace MyAlbum.Application.Album.implement
             _paths = paths;
             _read = read;
         }
+
+        public async Task<AlbumDto?> GetAlbumAsync(GetAlbumReq req, CancellationToken ct = default)
+        {
+            var operatorId = _currentUser.GetRequiredAccountId();
+
+            req.OwnerAccountId = operatorId;
+            req.Status = Status.Active;
+
+            return await _read.GetAlbumAsync(req, ct);
+        }
+
         public async Task<List<AlbumDto>> GetAlbumListAsync(GetAlbumListReq req, CancellationToken ct = default)
         {
             var operatorId = _currentUser.GetRequiredAccountId();
