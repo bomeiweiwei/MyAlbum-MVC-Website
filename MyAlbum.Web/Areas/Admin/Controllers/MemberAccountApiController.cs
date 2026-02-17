@@ -79,9 +79,9 @@ namespace MyAlbum.Web.Areas.Admin.Controllers
 
             if (files.Count > 0)
             {
-                const int maxFiles = 10;
+                const int maxFiles = 1;
                 const long maxFileSize = 2 * 1024 * 1024;   // 單檔 2MB
-                const long maxTotalSize = 10 * 1024 * 1024; // 總量 10MB
+                const long maxTotalSize = 2 * 1024 * 1024; // 總量 10MB
                 var allowedExtensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
                 {
                     ".jpg", ".jpeg", ".png"
