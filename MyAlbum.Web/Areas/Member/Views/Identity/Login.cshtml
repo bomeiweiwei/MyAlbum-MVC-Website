@@ -14,6 +14,8 @@
                     <form asp-action="Login" method="post">
                         @Html.AntiForgeryToken()
 
+                        <input type="hidden" name="returnUrl" value="@ViewData["ReturnUrl"]" />
+
                         <!-- 顯示整體表單錯誤 -->
                         <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
