@@ -4,28 +4,70 @@
 <ul class="navbar-nav ms-auto">
     @if (User.Identity?.IsAuthenticated == true && User.HasClaim("AccountType", "Member"))
     {
-        <li class="nav-item">
-            <a class="nav-link text-dark"
-               asp-area="Member"
-               asp-controller="Home"
-               asp-action="Index">
-                👤 @User.Identity.Name
+        <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle text-dark"
+               href="#"
+               id="memberDropdown"
+               role="button"
+               data-bs-toggle="dropdown"
+               aria-expanded="false">
+                👤 @User.Identity?.Name
             </a>
-        </li>
-        <li class="nav-item">
-            <form asp-area="Member" asp-controller="Identity" asp-action="Logout" method="post" class="d-inline">
-                @Html.AntiForgeryToken()
-                <button type="submit" class="btn btn-link nav-link">登出</button>
-            </form>
+
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="memberDropdown">
+                <li>
+                    <a class="dropdown-item"
+                       asp-area="Member"
+                       asp-controller="Album"
+                       asp-action="Index">
+                        相簿管理
+                    </a>
+                </li>
+
+                <li>
+                    <a class="dropdown-item"
+                       asp-area="Member"
+                       asp-controller="Profile"
+                       asp-action="Index">
+                        會員設定
+                    </a>
+                </li>
+
+                <li><hr class="dropdown-divider"></li>
+
+                <li>
+                    <form asp-area="Member"
+                          asp-controller="Identity"
+                          asp-action="Logout"
+                          method="post"
+                          class="d-inline">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="dropdown-item">
+                            登出
+                        </button>
+                    </form>
+                </li>
+            </ul>
         </li>
     }
     else
     {
         <li class="nav-item">
-            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Register">註冊</a>
+            <a class="nav-link text-dark"
+               asp-area=""
+               asp-controller="Home"
+               asp-action="Register">
+                註冊
+            </a>
         </li>
+
         <li class="nav-item">
-            <a class="nav-link text-dark" asp-area="Member" asp-controller="Identity" asp-action="Login">登入</a>
+            <a class="nav-link text-dark"
+               asp-area="Member"
+               asp-controller="Identity"
+               asp-action="Login">
+                登入
+            </a>
         </li>
     }
 </ul>
