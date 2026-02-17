@@ -58,6 +58,10 @@ namespace MyAlbum.Repository.Business.AlbumPhoto
             { 
                 query = query.Where(x => x.AlbumId == req.AlbumId.Value); 
             }
+            if (req.OwnerAccountId.HasValue)
+            {
+                query = query.Where(x => x.OwnerAccountId == req.OwnerAccountId.Value);
+            }
 
             //if (!string.IsNullOrWhiteSpace(req.FilePath)) { query = query.Where(m => m.FilePath.Contains(req.FilePath)); }
             //if (!string.IsNullOrWhiteSpace(req.OriginalFileName)) { query = query.Where(m => (m.OriginalFileName ?? "").Contains(req.OriginalFileName)); }
@@ -96,11 +100,12 @@ namespace MyAlbum.Repository.Business.AlbumPhoto
                 from album in photoGroup.DefaultIfEmpty()
                 join member in db.Members.AsNoTracking() on album.OwnerAccountId equals member.AccountId into memberGroup
                 from member in memberGroup.DefaultIfEmpty()
-                orderby main.AlbumId, main.SortOrder
+                orderby main.AlbumId, main.SortOrder, main.CreatedAtUtc descending
                 select new AlbumPhotoDto
                 {
                     OwnerName = member.DisplayName,
                     OwnerAccountId = album.OwnerAccountId,
+                    AlbumCategoryId = album.AlbumCategoryId,
                     Title = album.Title,
                     AlbumPhotoId = main.AlbumPhotoId,
                     AlbumId = main.AlbumId,
@@ -129,6 +134,10 @@ namespace MyAlbum.Repository.Business.AlbumPhoto
             {
                 query = query.Where(x => x.OwnerAccountId == req.Data.OwnerAccountId);
             }
+            if (req.Data.AlbumCategoryId.HasValue)
+            {
+                query = query.Where(x => x.AlbumCategoryId == req.Data.AlbumCategoryId);
+            }
             //if (!string.IsNullOrWhiteSpace(req.FilePath)) { query = query.Where(m => m.FilePath.Contains(req.FilePath)); }
             //if (!string.IsNullOrWhiteSpace(req.OriginalFileName)) { query = query.Where(m => (m.OriginalFileName ?? "").Contains(req.OriginalFileName)); }
             //if (!string.IsNullOrWhiteSpace(req.ContentType)) { query = query.Where(m => (m.ContentType ?? "").Contains(req.ContentType)); }
@@ -151,6 +160,28 @@ namespace MyAlbum.Repository.Business.AlbumPhoto
                 item.UpdatedAtUtc = DateTime.SpecifyKind(item.UpdatedAtUtc, DateTimeKind.Utc);
             }
 
+            return result;
+        }
+
+        public async Task<List<AlbumPhotoDto>> GetTopAlbumPhotoListAsync(GetTopAlbumPhotoReq req, CancellationToken ct = default)
+        {
+            var result = new List<AlbumPhotoDto>();
+
+            using var ctx = _factory.Create(ConnectionMode.Slave);
+            var db = ctx.AsDbContext<MyAlbumContext>();
+
+            result = await db.AlbumPhotos.AsNoTracking().Where(m => m.Status == (int)Status.Active && m.CommentNum > 0).Select(m => new AlbumPhotoDto
+            {
+                AlbumPhotoId = m.AlbumPhotoId,
+                AlbumId = m.AlbumId,
+                PublicPathUrl = m.FilePath,
+                CommentNum = m.CommentNum,
+                CreatedAtUtc = m.CreatedAtUtc
+            }).OrderByDescending(m => m.CommentNum).ThenByDescending(m => m.CreatedAtUtc).Take(req.GetTopCount).ToListAsync(ct);
+            foreach (var item in result)
+            {
+                item.CreatedAtUtc = DateTime.SpecifyKind(item.CreatedAtUtc, DateTimeKind.Utc);
+            }
             return result;
         }
     }

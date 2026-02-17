@@ -75,8 +75,11 @@ namespace MyAlbum.Repository.Business.AlbumComment
 
             var query =
                 from main in db.AlbumComments.AsNoTracking()
+                join photo in db.AlbumPhotos.AsNoTracking() on main.AlbumPhotoId equals photo.AlbumPhotoId
+                join album in db.Albums.AsNoTracking() on photo.AlbumId equals album.AlbumId
                 join member in db.Members.AsNoTracking() on main.MemberId equals member.MemberId into memberGroup
                 from member in memberGroup.DefaultIfEmpty()
+                orderby main.CreatedAtUtc descending
                 select new AlbumCommentDto
                 {
                     AlbumCommentId = main.AlbumCommentId,
@@ -90,7 +93,8 @@ namespace MyAlbum.Repository.Business.AlbumComment
                     UpdatedAtUtc = main.UpdatedAtUtc,
                     CreatedBy = main.CreatedBy,
                     UpdatedBy = main.UpdatedBy,
-                    DisplayName = member.DisplayName
+                    DisplayName = member.DisplayName,
+                    OwnerAccountId = album.OwnerAccountId
                 };
 
             if (req.Data.AlbumCommentId.HasValue) { query = query.Where(x => x.AlbumCommentId == req.Data.AlbumCommentId.Value); }
@@ -107,6 +111,8 @@ namespace MyAlbum.Repository.Business.AlbumComment
 
             if (req.Data.StartReleaseTimeUtc.HasValue) { query = query.Where(m => m.ReleaseTimeUtc >= req.Data.StartReleaseTimeUtc.Value); }
             if (req.Data.EndReleaseTimeUtc.HasValue) { query = query.Where(m => m.ReleaseTimeUtc < req.Data.EndReleaseTimeUtc.Value); }
+
+            if (req.Data.OwnerAccountId.HasValue) { query = query.Where(m => m.OwnerAccountId == req.Data.OwnerAccountId); }
 
             result.Count = await query.CountAsync(ct);
             result.Data = await query.Skip((req.pageIndex - 1) * req.pageSize).Take(req.pageSize).AsNoTracking().ToListAsync(ct);
