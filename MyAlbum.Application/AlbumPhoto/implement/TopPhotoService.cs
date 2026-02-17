@@ -2,6 +2,7 @@
 using MyAlbum.Domain;
 using MyAlbum.Domain.AlbumPhoto;
 using MyAlbum.Models.AlbumPhoto;
+using MyAlbum.Shared.Enums;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -20,8 +21,13 @@ namespace MyAlbum.Application.AlbumPhoto.implement
             _read = read;
             _paths = paths;
         }
-        public async Task<List<AlbumPhotoDto>> GetTopPhotos(GetTopAlbumPhotoReq req, CancellationToken ct = default)
+        public async Task<List<AlbumPhotoDto>> GetTopPhotos(CancellationToken ct = default)
         {
+            GetTopAlbumPhotoReq req = new GetTopAlbumPhotoReq
+            {
+                GetTopCount = 5,
+                Status = Status.Active
+            };
             var list = await _read.GetTopAlbumPhotoListAsync(req, ct);
             if (list.Count > 0)
             {

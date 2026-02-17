@@ -5,8 +5,8 @@ using System.Text;
 
 namespace MyAlbum.Application.AlbumPhoto
 {
-    public interface ITopPhotoService
+    public interface ICategoryPhotoReadService
     {
-        Task<List<AlbumPhotoDto>> GetTopPhotos(CancellationToken ct = default);
+        Task<AlbumCategoryViewDto> GetAlbumCategoryData(Guid Id, CancellationToken ct = default);
     }
 }
