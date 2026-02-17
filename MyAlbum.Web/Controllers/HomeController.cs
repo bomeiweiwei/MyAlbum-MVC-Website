@@ -1,10 +1,13 @@
 using Microsoft.AspNetCore.Mvc;
+using MyAlbum.Application.AlbumPhoto;
 using MyAlbum.Application.Member;
 using MyAlbum.Application.Member.implement;
 using MyAlbum.Application.MemberAccount;
+using MyAlbum.Models.AlbumPhoto;
 using MyAlbum.Models.MemberAccount;
 using MyAlbum.Models.UploadFiles;
 using MyAlbum.Web.Models;
+using MyAlbum.Web.Models.TopImgComment;
 using System.Diagnostics;
 
 namespace MyAlbum.Web.Controllers
@@ -12,14 +15,24 @@ namespace MyAlbum.Web.Controllers
     public class HomeController : Controller
     {
         private readonly IMemberRegisterService _memberRegisterService;
-        public HomeController(IMemberRegisterService memberRegisterService)
+        private readonly ITopPhotoService _topPhotoService;
+        public HomeController(
+            IMemberRegisterService memberRegisterService,
+            ITopPhotoService topPhotoService)
         {
             _memberRegisterService = memberRegisterService;
+            _topPhotoService = topPhotoService;
         }
 
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
-            return View();
+            GetTopAlbumPhotoReq req = new GetTopAlbumPhotoReq() { GetTopCount = 5 };
+            var list = await _topPhotoService.GetTopPhotos(req);
+
+            TopPhotoCommentViewModel model = new TopPhotoCommentViewModel();
+            model.Photos = list;
+
+            return View(model);
         }
 
         public IActionResult Register()
@@ -49,6 +62,11 @@ namespace MyAlbum.Web.Controllers
                 }
             }
             return View(req);
+        }
+
+        public IActionResult AlbumCategory(Guid albumCategoryId)
+        {
+            return View();
         }
 
         public IActionResult Privacy()

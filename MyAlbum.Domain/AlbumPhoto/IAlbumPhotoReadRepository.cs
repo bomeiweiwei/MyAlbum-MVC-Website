@@ -10,5 +10,7 @@ namespace MyAlbum.Domain.AlbumPhoto
     {
         Task<AlbumPhotoDto?> GetAlbumPhotoAsync(GetAlbumPhotoReq req, CancellationToken ct = default);
         Task<ResponseBase<List<AlbumPhotoDto>>> GetAlbumPhotoListAsync(PageRequestBase<GetAlbumPhotoReq> req, CancellationToken ct = default);
+
+        Task<List<AlbumPhotoDto>> GetTopAlbumPhotoListAsync(GetTopAlbumPhotoReq req, CancellationToken ct = default);
     }
 }
