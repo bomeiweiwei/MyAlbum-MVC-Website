@@ -58,6 +58,10 @@ namespace MyAlbum.Repository.Business.AlbumPhoto
             { 
                 query = query.Where(x => x.AlbumId == req.AlbumId.Value); 
             }
+            if (req.OwnerAccountId.HasValue)
+            {
+                query = query.Where(x => x.OwnerAccountId == req.OwnerAccountId.Value);
+            }
 
             //if (!string.IsNullOrWhiteSpace(req.FilePath)) { query = query.Where(m => m.FilePath.Contains(req.FilePath)); }
             //if (!string.IsNullOrWhiteSpace(req.OriginalFileName)) { query = query.Where(m => (m.OriginalFileName ?? "").Contains(req.OriginalFileName)); }
@@ -151,6 +155,28 @@ namespace MyAlbum.Repository.Business.AlbumPhoto
                 item.UpdatedAtUtc = DateTime.SpecifyKind(item.UpdatedAtUtc, DateTimeKind.Utc);
             }
 
+            return result;
+        }
+
+        public async Task<List<AlbumPhotoDto>> GetTopAlbumPhotoListAsync(GetTopAlbumPhotoReq req, CancellationToken ct = default)
+        {
+            var result = new List<AlbumPhotoDto>();
+
+            using var ctx = _factory.Create(ConnectionMode.Slave);
+            var db = ctx.AsDbContext<MyAlbumContext>();
+
+            result = await db.AlbumPhotos.AsNoTracking().Where(m => m.Status == (int)Status.Active && m.CommentNum > 0).Select(m => new AlbumPhotoDto
+            {
+                AlbumPhotoId = m.AlbumPhotoId,
+                AlbumId = m.AlbumId,
+                PublicPathUrl = m.FilePath,
+                CommentNum = m.CommentNum,
+                CreatedAtUtc = m.CreatedAtUtc
+            }).OrderByDescending(m => m.CommentNum).ThenByDescending(m => m.CreatedAtUtc).Take(req.GetTopCount).ToListAsync(ct);
+            foreach (var item in result)
+            {
+                item.CreatedAtUtc = DateTime.SpecifyKind(item.CreatedAtUtc, DateTimeKind.Utc);
+            }
             return result;
         }
     }

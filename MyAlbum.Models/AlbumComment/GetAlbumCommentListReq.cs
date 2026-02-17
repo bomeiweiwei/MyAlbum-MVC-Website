@@ -33,5 +33,7 @@ namespace MyAlbum.Models.AlbumComment
         /// 系統內為 Enum
         /// </summary>
         public Status? Status { get; set; }
+
+        public Guid? OwnerAccountId { get; set; }
     }
 }

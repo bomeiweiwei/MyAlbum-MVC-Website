@@ -1,0 +1,33 @@
+﻿@model IEnumerable<MyAlbum.Models.AlbumComment.AlbumCommentDto>
+@{
+    ViewData["Title"] = "留言檢視";
+    Layout = "~/Views/Shared/_MemberLayout.cshtml";
+}
+@{
+    var albumPhoto = ViewBag.AlbumPhoto as MyAlbum.Models.AlbumPhoto.AlbumPhotoDto;
+}
+<h4>留言檢視</h4>
+<hr />
+<div class="row">
+    <div class="col-12 col-md-6">
+        <div class="card">
+            <img class="card-img-top" src="@albumPhoto.PublicPathUrl" />
+        </div>
+    </div>
+
+    <div class="col-12 col-md-6">
+        <div style="overflow:auto;height:700px;">
+            @foreach (var item in Model)
+            {
+                <div class="card mb-2">
+                    <div class="card-body">
+                        <h5 class="text-primary">@item.DisplayName</h5>
+                        <p>@item.Comment</p>
+                        <p>@item.ReleaseTimeUtc.ToLocalTime()</p>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
