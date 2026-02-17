@@ -37,6 +37,10 @@ namespace MyAlbum.Repository.Business.Category
             {
                 query = query.Where(x => x.CategoryName == req.CategoryName);
             }
+            if (req.Status.HasValue)
+            {
+                query = query.Where(m => m.Status == Status.Active);
+            }
 
             result = await query.FirstOrDefaultAsync(ct);
 

@@ -1,12 +1,16 @@
 using Microsoft.AspNetCore.Mvc;
 using MyAlbum.Application.AlbumPhoto;
+using MyAlbum.Application.Category;
 using MyAlbum.Application.Member;
 using MyAlbum.Application.Member.implement;
 using MyAlbum.Application.MemberAccount;
 using MyAlbum.Models.AlbumPhoto;
+using MyAlbum.Models.Base;
+using MyAlbum.Models.Category;
 using MyAlbum.Models.MemberAccount;
 using MyAlbum.Models.UploadFiles;
 using MyAlbum.Web.Models;
+using MyAlbum.Web.Models.AlbumCategory;
 using MyAlbum.Web.Models.TopImgComment;
 using System.Diagnostics;
 
@@ -16,18 +20,20 @@ namespace MyAlbum.Web.Controllers
     {
         private readonly IMemberRegisterService _memberRegisterService;
         private readonly ITopPhotoService _topPhotoService;
+        private readonly ICategoryPhotoReadService _categoryPhotoReadService;
         public HomeController(
             IMemberRegisterService memberRegisterService,
-            ITopPhotoService topPhotoService)
+            ITopPhotoService topPhotoService,
+            ICategoryPhotoReadService categoryPhotoReadService)
         {
             _memberRegisterService = memberRegisterService;
             _topPhotoService = topPhotoService;
+            _categoryPhotoReadService = categoryPhotoReadService;
         }
 
         public async Task<IActionResult> Index()
         {
-            GetTopAlbumPhotoReq req = new GetTopAlbumPhotoReq() { GetTopCount = 5 };
-            var list = await _topPhotoService.GetTopPhotos(req);
+            var list = await _topPhotoService.GetTopPhotos();
 
             TopPhotoCommentViewModel model = new TopPhotoCommentViewModel();
             model.Photos = list;
@@ -64,9 +70,22 @@ namespace MyAlbum.Web.Controllers
             return View(req);
         }
 
-        public IActionResult AlbumCategory(Guid albumCategoryId)
+
+        public async Task<IActionResult> AlbumCategory(Guid albumCategoryId)
         {
-            return View();
+            var data = await _categoryPhotoReadService.GetAlbumCategoryData(albumCategoryId);
+            if (data == null || string.IsNullOrWhiteSpace(data.CategoryName))
+            {
+                return NotFound();
+            }
+
+            AlbumCategoryViewModel vm = new AlbumCategoryViewModel()
+            {
+                CategoryName = data.CategoryName,
+                Photos = data.Photos
+            };
+
+            return View(vm);
         }
 
         public IActionResult Privacy()

@@ -22,5 +22,7 @@ namespace MyAlbum.Models.AlbumPhoto
         public Status? Status { get; set; }
 
         public Guid? OwnerAccountId { get; set; }
+
+        public Guid? AlbumCategoryId { get; set; }
     }
 }

@@ -29,5 +29,7 @@ namespace MyAlbum.Models.AlbumPhoto
         public string Title { get; set; }
         public string OwnerName { get; set; }
         public Guid OwnerAccountId { get; set; }
+
+        public Guid AlbumCategoryId { get; set; }
     }
 }

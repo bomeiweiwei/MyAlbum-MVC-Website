@@ -1,8 +1,52 @@
-﻿
+﻿@model MyAlbum.Web.Models.AlbumCategory.AlbumCategoryViewModel
+
 @{
     ViewData["Title"] = "相簿分類";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<h1>相簿分類</h1>
+<h4>@Model.CategoryName</h4>
+<hr />
 
+<div class="row">
+    @foreach (var item in Model.Photos)
+    {
+        <div class="col-12 col-md-4 mb-3">
+            <div class="card" style="width:100%;">
+                <img class="card-img-top preview-img"
+                     src="@item.PublicPathUrl"
+                     data-full="@item.PublicPathUrl"
+                     style="height:240px; object-fit:cover; cursor:pointer;"
+                     alt="@item.Title">
+                <div class="card-body d-flex flex-column">
+                    <p class="card-text text-secondary">評論數量：@item.CommentNum</p>
+                    <p class="card-text text-secondary">發佈時間：@item.CreatedAtUtc.ToLocalTime()</p>
+                    <a asp-action="CommentList" asp-route-albumPhotoId="@item.AlbumPhotoId"
+                       class="btn btn-secondary">觀看評論</a>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<div class="modal fade" id="imageModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content bg-transparent border-0">
+            <img id="modalImage" class="w-100 rounded">
+        </div>
+    </div>
+</div>
+
+<script>
+    // AlbumPhoto圖片預覽 Modal===
+    document.querySelectorAll('.preview-img').forEach(img => {
+        img.addEventListener('click', function () {
+            const fullImageUrl = this.dataset.full;
+            document.getElementById('modalImage').src = fullImageUrl;
+
+            const modal = new bootstrap.Modal(document.getElementById('imageModal'));
+            modal.show();
+        });
+    });
+    // AlbumPhoto圖片預覽 Modal===
+</script>

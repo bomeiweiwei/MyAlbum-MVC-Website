@@ -105,6 +105,7 @@ namespace MyAlbum.Repository.Business.AlbumPhoto
                 {
                     OwnerName = member.DisplayName,
                     OwnerAccountId = album.OwnerAccountId,
+                    AlbumCategoryId = album.AlbumCategoryId,
                     Title = album.Title,
                     AlbumPhotoId = main.AlbumPhotoId,
                     AlbumId = main.AlbumId,
@@ -132,6 +133,10 @@ namespace MyAlbum.Repository.Business.AlbumPhoto
             if (req.Data.OwnerAccountId.HasValue)
             {
                 query = query.Where(x => x.OwnerAccountId == req.Data.OwnerAccountId);
+            }
+            if (req.Data.AlbumCategoryId.HasValue)
+            {
+                query = query.Where(x => x.AlbumCategoryId == req.Data.AlbumCategoryId);
             }
             //if (!string.IsNullOrWhiteSpace(req.FilePath)) { query = query.Where(m => m.FilePath.Contains(req.FilePath)); }
             //if (!string.IsNullOrWhiteSpace(req.OriginalFileName)) { query = query.Where(m => (m.OriginalFileName ?? "").Contains(req.OriginalFileName)); }
