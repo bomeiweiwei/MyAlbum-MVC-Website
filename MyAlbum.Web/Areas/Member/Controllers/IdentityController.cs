@@ -73,7 +73,7 @@ namespace MyAlbum.Web.Areas.Member.Controllers
             });
 
             // 安全導回
-            var fallbackUrl = Url.Action("Index", "Home", new { area = "Member" });
+            var fallbackUrl = Url.Action("Index", "Home", new { area = "" });
 
             if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
                 return LocalRedirect(returnUrl);

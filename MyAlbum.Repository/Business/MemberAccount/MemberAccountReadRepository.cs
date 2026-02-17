@@ -53,8 +53,6 @@ namespace MyAlbum.Repository.Business.MemberAccount
                         join account in db.Accounts.AsNoTracking() on member.AccountId equals account.AccountId
                         where
                             account.AccountType == (int)AccountType.Member
-                            && member.MemberId == req.MemberId
-                            && account.AccountId == req.AccountId
                         select new MemberAccountDto()
                         {
                             MemberId = member.MemberId,
@@ -65,6 +63,14 @@ namespace MyAlbum.Repository.Business.MemberAccount
                             Status = (Status)account.Status,
                             PublicAvatarUrl = member.AvatarPath
                         };
+            if (req.AccountId != Guid.Empty)
+            {
+                query = query.Where(m => m.AccountId == req.AccountId);
+            }
+            if (req.MemberId != Guid.Empty)
+            {
+                query = query.Where(m => m.MemberId == req.MemberId);
+            }
             result = await query.FirstOrDefaultAsync(ct);
 
             return result;
