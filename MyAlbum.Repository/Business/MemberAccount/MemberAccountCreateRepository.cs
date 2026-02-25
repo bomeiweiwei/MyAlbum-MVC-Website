@@ -25,7 +25,6 @@ namespace MyAlbum.Repository.Business.MemberAccount
             var db = ctx.AsDbContext<MyAlbumContext>();
             var strategy = db.Database.CreateExecutionStrategy();
 
-
             var exists = await db.Accounts.AsNoTracking()
                 .AnyAsync(a => a.UserName == accountDto.UserName, ct);
 
@@ -39,8 +38,6 @@ namespace MyAlbum.Repository.Business.MemberAccount
                 await using var tx = await db.Database.BeginTransactionAsync(ct);
                 try
                 {
-                    DateTime now = DateTime.UtcNow;
-
                     var account = new Infrastructure.EF.Models.Account
                     {
                         AccountId = accountDto.AccountId,
@@ -48,9 +45,9 @@ namespace MyAlbum.Repository.Business.MemberAccount
                         PasswordHash = accountDto.PasswordHash,
                         AccountType = (int)AccountType.Member,
                         Status = (int)Status.Active,
-                        CreatedAtUtc = now,
+                        CreatedAtUtc = accountDto.CreatedAtUtc,
                         CreatedBy = accountDto.CreatedBy,
-                        UpdatedAtUtc = now,
+                        UpdatedAtUtc = accountDto.CreatedAtUtc,
                         UpdatedBy = accountDto.CreatedBy
                     };
                     await db.Accounts.AddAsync(account, ct);
@@ -62,9 +59,10 @@ namespace MyAlbum.Repository.Business.MemberAccount
                         Email = memberDto.Email,
                         DisplayName = memberDto.DisplayName,
                         Status = (int)Status.Active,
-                        CreatedAtUtc = now,
+                        AvatarPath = memberDto.AvatarPath,
+                        CreatedAtUtc = memberDto.CreatedAtUtc,
                         CreatedBy = memberDto.CreatedBy,
-                        UpdatedAtUtc = now,
+                        UpdatedAtUtc = memberDto.CreatedAtUtc,
                         UpdatedBy = memberDto.CreatedBy
                     };
                     await db.Members.AddAsync(member, ct);

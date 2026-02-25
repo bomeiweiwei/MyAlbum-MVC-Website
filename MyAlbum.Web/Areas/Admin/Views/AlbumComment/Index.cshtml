@@ -1,0 +1,275 @@
+﻿
+@{
+    ViewData["Title"] = "留言管理";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div id="app" class="p-3">
+    <el-card shadow="never">
+        <template #header>
+            <div style="display:flex; flex-direction:column; gap:16px;">
+
+                <!-- 第一行：標題 + 新增 -->
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div style="font-size:16px; font-weight:600;">
+                        留言管理
+                    </div>
+                </div>
+
+                <!-- 第二行：查詢表單 -->
+                <el-form :inline="true"
+                         :model="query"
+                         class="album-search-form"
+                         style="width:100%;">
+
+                    <el-form-item label="發佈日">
+                        <el-date-picker v-model="query.releaseDateRange"
+                                        type="daterange"
+                                        range-separator="~"
+                                        start-placeholder="開始日"
+                                        end-placeholder="結束日"
+                                        format="YYYY-MM-DD"
+                                        value-format="x"
+                                        style="width:300px;" />
+                    </el-form-item>
+                    <el-form-item label="狀態">
+                        <el-select v-model="query.statusFilter"
+                                   placeholder="狀態"
+                                   clearable
+                                   style="width:140px;">
+                            <el-option label="全部" :value="null"></el-option>
+                            <el-option label="啟用" :value="statusValues.enabled"></el-option>
+                            <el-option label="停用" :value="statusValues.disabled"></el-option>
+                        </el-select>
+                    </el-form-item>
+
+                    <!-- 查詢 / 清除 -->
+                    <el-form-item class="search-buttons">
+                        <el-button type="primary" v-on:click="onSearch">查詢</el-button>
+                        <el-button v-on:click="resetQuery">清除</el-button>
+                    </el-form-item>
+
+                </el-form>
+            </div>
+        </template>
+
+        <!-- Table -->
+        <el-table :data="rows" v-loading="loading" border style="width:100%;">
+            <el-table-column prop="displayName" label="留言者" min-width="80"></el-table-column>
+            <el-table-column prop="comment" label="留言" min-width="250"></el-table-column>
+            <el-table-column prop="releaseTimeUtc" label="留言時間" min-width="150">
+                <template #default="scope">
+                    {{ utcToTaipeiText(scope.row.releaseTimeUtc) }}
+                </template>
+            </el-table-column>
+            <el-table-column label="狀態" width="140">
+                <template #default="scope">
+                    <el-tag v-if="isEnabled(scope.row.status)" type="success">啟用</el-tag>
+                    <el-tag v-else type="info">停用</el-tag>
+                </template>
+            </el-table-column>
+
+            <el-table-column label="操作" width="300">
+                <template #default="scope">
+                    <el-button size="small" v-on:click="openEdit(scope.row)">更新</el-button>
+
+                    <el-button size="small"
+                               type="danger"
+                               :disabled="!isEnabled(scope.row.status)"
+                               v-on:click="confirmSetStatus(scope.row, statusValues.disabled)">
+                        停用
+                    </el-button>
+
+                    <el-button size="small"
+                               type="success"
+                               :disabled="isEnabled(scope.row.status)"
+                               v-on:click="confirmSetStatus(scope.row, statusValues.enabled)">
+                        啟用
+                    </el-button>
+                </template>
+            </el-table-column>
+        </el-table>
+
+        <!-- Pagination -->
+        <div style="display:flex; justify-content:flex-end; margin-top:12px;">
+            <el-pagination background
+                           layout="total, sizes, prev, pager, next, jumper"
+                           :total="pager.total"
+                           :page-size="pager.pageSize"
+                           :current-page="pager.pageIndex"
+                           :page-sizes="[10, 20, 50, 100]"
+                           v-on:current-change="onPageChange"
+                           v-on:size-change="onSizeChange">
+            </el-pagination>
+        </div>
+    </el-card>
+
+    <!-- Dialog：Create / Edit -->
+</div>
+
+<style>
+    .album-search-form {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 12px 16px;
+    }
+
+        /* 移除 el-form-item 預設下方間距 */
+        .album-search-form .el-form-item {
+            margin-bottom: 0;
+        }
+
+        /* 讓查詢按鈕群靠右 */
+        .album-search-form .search-buttons {
+            margin-left: auto;
+        }
+
+</style>
+
+<script>
+    const { createApp, reactive, ref, onMounted } = Vue;
+
+    createApp({
+        setup() {
+            const loading = ref(false);
+            const rows = ref([]);
+
+            // Status enum：1=啟用, 0=停用
+            const statusValues = {
+                enabled: 1,
+                disabled: 0
+            };
+
+            // 查詢條件
+            const query = reactive({
+                releaseDateRange: null,
+                statusFilter: null // null=全部
+            });
+
+            // 分頁
+            const pager = reactive({
+                pageIndex: 1,
+                pageSize: 10,
+                total: 0
+            });
+
+            // Dialog
+
+            // Form
+
+            const api = axios.create({
+                baseURL: '/Admin/Api/AlbumCommentApi',
+                headers: { 'Content-Type': 'application/json' }
+            });
+
+            function isEnabled(status) {
+                return status === statusValues.enabled;
+            }
+
+            const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+            async function loadList() {
+                loading.value = true;
+                try {
+                    const startMs = query.releaseDateRange?.[0] ?? null;
+                    const endMsExclusive = query.releaseDateRange?.[1]
+                    ? Number(query.releaseDateRange[1]) + ONE_DAY_MS
+                    : null;
+                    const resp = await api.get('', {
+                        params: {
+                            pageIndex: pager.pageIndex,
+                            pageSize: pager.pageSize,
+                            'Data.StartLocalMs': startMs,
+                            'Data.EndLocalMs': endMsExclusive,
+                            'Data.Status': query.statusFilter
+                        }
+                    });
+
+                    const payload = resp.data || {};
+                    rows.value = payload.data ?? payload.Data ?? [];
+                    pager.total = payload.count ?? payload.Count ?? 0;
+                } catch (e) {
+                    ElementPlus.ElMessage.error('載入列表失敗');
+                } finally {
+                    loading.value = false;
+                }
+            }
+
+            function onSearch() {
+                pager.pageIndex = 1;
+                loadList();
+            }
+
+            function resetQuery() {
+                query.releaseDateRange = null;
+                query.statusFilter = null;
+                pager.pageIndex = 1;
+                loadList();
+            }
+
+            function onPageChange(page) {
+                pager.pageIndex = page;
+                loadList();
+            }
+
+            function onSizeChange(size) {
+                pager.pageSize = size;
+                pager.pageIndex = 1;
+                loadList();
+            }
+
+            async function confirmSetStatus(row, newStatus) {
+                const actionText = (newStatus === statusValues.disabled) ? '停用' : '啟用';
+
+                try {
+                    await ElementPlus.ElMessageBox.confirm(
+                        `確定要${actionText}此留言？`,
+                        `${actionText}確認`,
+                        { type: 'warning' }
+                    );
+
+                    const resp = await api.patch(`/${row.albumCommentId}/status`, {
+                        status: newStatus
+                    });
+
+                    const ok = resp.data === true || resp.data === "true";
+                    if (ok) {
+                        row.status = newStatus;
+                        ElementPlus.ElMessage.success(`${actionText}成功`);
+                    } else {
+                        ElementPlus.ElMessage.error(`${actionText}失敗`);
+                    }
+                } catch {
+                    // cancel / ignore
+                }
+            }
+
+            function utcToTaipeiText(utc) {
+              if (!utc) return '';
+              const d = new Date(utc);
+              if (Number.isNaN(d.getTime())) return '';
+              return d.toLocaleString('zh-TW', { timeZone: 'Asia/Taipei', hour12: false });
+            }
+
+            onMounted(loadList);
+
+            return {
+                loading,
+                rows,
+                query,
+                pager,
+                statusValues,
+                isEnabled,
+                loadList,
+                onSearch,
+                resetQuery,
+                onPageChange,
+                onSizeChange,
+                confirmSetStatus,
+                utcToTaipeiText
+            };
+        }
+    }).use(ElementPlus).mount('#app');
+</script>
+
+

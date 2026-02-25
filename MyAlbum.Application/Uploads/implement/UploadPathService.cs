@@ -19,6 +19,20 @@ namespace MyAlbum.Application.Uploads.implement
             return CombineKey(_opt.MemberImgRoot, memberId.ToString("N"), fileName);
         }
 
+        public string BuildAlbumCoverPathFileKey(Guid albumId, string originalFileName)
+        {
+            var ext = NormalizeExt(Path.GetExtension(originalFileName));
+            var fileName = $"{Guid.NewGuid():N}{ext}";
+            return CombineKey(_opt.CoverImgRoot, albumId.ToString("N"), fileName);
+        }
+
+        public string BuildAlbumPhotoPathFileKey(Guid albumIdPhotoId, string originalFileName)
+        {
+            var ext = NormalizeExt(Path.GetExtension(originalFileName));
+            var fileName = $"{Guid.NewGuid():N}{ext}";
+            return CombineKey(_opt.PhotoImgRoot, albumIdPhotoId.ToString("N"), fileName);
+        }
+
         public string ToPhysicalPath(string fileKey)
         {
             if (string.IsNullOrWhiteSpace(_opt.RootPath))
@@ -41,7 +55,6 @@ namespace MyAlbum.Application.Uploads.implement
             {
                 ".jpg" or ".jpeg" => ".jpg",
                 ".png" => ".png",
-                ".webp" => ".webp",
                 _ => ext
             };
         }

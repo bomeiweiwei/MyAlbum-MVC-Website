@@ -10,6 +10,8 @@ namespace MyAlbum.Application.Category
     {
         Task<AlbumCategoryDto?> GetAlbumCategoryAsync(GetAlbumCategoryReq req, CancellationToken ct = default);
 
-        Task<ResponseBase<List<AlbumCategoryDto>>> GetAlbumCategoryListAsync(PageRequestBase<GetAlbumCategoryReq> req, CancellationToken ct = default);
+        Task<ResponseBase<List<AlbumCategoryDto>>> GetAlbumCategoryListAsync(PageRequestBase<GetAlbumCategoryListReq> req, CancellationToken ct = default);
+
+        Task<List<AlbumCategoryDto>> GetAlbumCategoryItemListAsync(GetAlbumCategoryListReq req, CancellationToken ct = default);
     }
 }

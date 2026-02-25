@@ -10,7 +10,7 @@ namespace MyAlbum.Models.AlbumPhoto
         public Guid AlbumPhotoId { get; set; }
         public Guid AlbumId { get; set; }
 
-        public string FilePath { get; set; } = null!;
+        public string PublicPathUrl { get; set; } = null!;
         public string? OriginalFileName { get; set; }
         public string? ContentType { get; set; }
 
@@ -25,5 +25,11 @@ namespace MyAlbum.Models.AlbumPhoto
         public DateTime UpdatedAtUtc { get; set; }
         public Guid CreatedBy { get; set; }
         public Guid UpdatedBy { get; set; }
+
+        public string Title { get; set; }
+        public string OwnerName { get; set; }
+        public Guid OwnerAccountId { get; set; }
+
+        public Guid AlbumCategoryId { get; set; }
     }
 }

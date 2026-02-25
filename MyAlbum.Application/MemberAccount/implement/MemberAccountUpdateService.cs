@@ -1,4 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity;
+using MyAlbum.Application.Member;
+using MyAlbum.Application.Uploads;
 using MyAlbum.Domain;
 using MyAlbum.Domain.Account;
 using MyAlbum.Domain.Employee;
@@ -9,6 +11,7 @@ using MyAlbum.Models.Employee;
 using MyAlbum.Models.Identity;
 using MyAlbum.Models.Member;
 using MyAlbum.Models.MemberAccount;
+using MyAlbum.Models.UploadFiles;
 using MyAlbum.Shared.Enums;
 using MyAlbum.Shared.Extensions;
 using MyAlbum.Shared.Idenyity;
@@ -25,6 +28,7 @@ namespace MyAlbum.Application.MemberAccount.implement
         private readonly ICurrentUserAccessor _currentUser;
         private readonly IAccountUpdateRepository _accountUpdateRepository;
         private readonly IMemberUpdateRepository _memberUpdateRepository;
+        private readonly IFileUploadManagerService _fileUploadManagerService;
         public MemberAccountUpdateService(
            IAlbumDbContextFactory factory,
            IExecutionStrategyFactory strategyFactory,
@@ -32,16 +36,20 @@ namespace MyAlbum.Application.MemberAccount.implement
            ICurrentUserAccessor currentUser,
            IEmployeeAccountCreateRepository employeeAccountCreateRepository,
            IAccountUpdateRepository accountUpdateRepository,
-           IMemberUpdateRepository memberUpdateRepository) : base(factory)
+           IMemberUpdateRepository memberUpdateRepository,
+           IMemberAvatarUploadService memberDataUploadService,
+           IFileUploadManagerService fileUploadManagerService
+           ) : base(factory)
         {
             _strategyFactory = strategyFactory;
             _hasher = hasher;
             _currentUser = currentUser;
             _accountUpdateRepository = accountUpdateRepository;
             _memberUpdateRepository = memberUpdateRepository;
+            _fileUploadManagerService = fileUploadManagerService;
         }
 
-        public async Task<bool> UpdateMemberAccountAsync(UpdateMemberAccountReq req, CancellationToken ct = default)
+        public async Task<bool> UpdateMemberAccountAsync(UpdateMemberAccountReq req, IReadOnlyList<UploadFileStream> files, CancellationToken ct = default)
         {
             var result = false;
             var operatorId = _currentUser.GetRequiredAccountId();
@@ -51,21 +59,48 @@ namespace MyAlbum.Application.MemberAccount.implement
                 passwordHash = _hasher.HashPassword(null!, req.Password);
             }
 
+            // 上傳檔案並取得檔案位置
+            Dictionary<string, string> dict = new Dictionary<string, string>();
+            int fileCount = files.Count;
+            if (fileCount > 0)
+            {
+                UploadModel uploadModel = new UploadModel()
+                {
+                    Id = req.MemberId,
+                    ColumnType = 1,
+                    EntityUploadType = EntityUploadType.Member
+                };
+                dict = await _fileUploadManagerService.FileUpload(uploadModel, files, ct);
+            }
+            string avatarPath = string.Empty;
+            if (dict.Count > 0)
+            {
+                var chkFile = files.First();
+                if (dict.TryGetValue(chkFile.FileName, out var name))
+                {
+                    avatarPath = name;
+                }
+            }
+
+            var now = DateTime.UtcNow;
             AccountUpdateDto accountDto = new AccountUpdateDto
             {
                 AccountId = req.AccountId,
                 PasswordHash = passwordHash,
-                Status = req.AccountStatus,
+                Status = req.Status,
+                UpdatedAtUtc = now,
                 UpdateBy = operatorId
             };
 
-            MemberUpdateDto employeeDto = new MemberUpdateDto
+            MemberUpdateDto memberDto = new MemberUpdateDto
             {
                 MemberId = req.MemberId,
                 AccountId = req.AccountId,
                 Email = req.Email,
                 DisplayName = req.DisplayName,
-                Status = req.MemberStatus,
+                AvatarPath = !string.IsNullOrWhiteSpace(avatarPath) ? avatarPath : null,
+                Status = req.Status,
+                UpdatedAtUtc = now,
                 UpdateBy = operatorId
             };
 
@@ -79,7 +114,7 @@ namespace MyAlbum.Application.MemberAccount.implement
                 try
                 {
                     var accountResult = await _accountUpdateRepository.UpdateAccountAsync(ctx, accountDto, ct);
-                    var memberResult = await _memberUpdateRepository.UpdateMemberAsync(ctx, employeeDto, ct);
+                    var memberResult = await _memberUpdateRepository.UpdateMemberAsync(ctx, memberDto, ct);
 
                     result = accountResult== UpdateResult.Updated && memberResult;
                     if (result)
@@ -101,18 +136,22 @@ namespace MyAlbum.Application.MemberAccount.implement
         {
             var result = false;
             var operatorId = _currentUser.GetRequiredAccountId();
+
+            var now = DateTime.UtcNow;
             AccountUpdateDto accountDto = new AccountUpdateDto
             {
                 AccountId = req.AccountId,
-                Status = req.AccountStatus,
+                Status = req.Status,
+                UpdatedAtUtc = now,
                 UpdateBy = operatorId
             };
 
-            MemberUpdateDto employeeDto = new MemberUpdateDto
+            MemberUpdateDto memberDto = new MemberUpdateDto
             {
                 MemberId = req.MemberId,
-                AccountId = req.AccountId,
-                Status = req.MemberStatus,
+                AccountId = accountDto.AccountId,
+                Status = req.Status,
+                UpdatedAtUtc = now,
                 UpdateBy = operatorId
             };
 
@@ -125,8 +164,8 @@ namespace MyAlbum.Application.MemberAccount.implement
 
                 try
                 {
-                    var accountResult = await _accountUpdateRepository.UpdateAccountAsync(ctx, accountDto, ct);
-                    var memberResult = await _memberUpdateRepository.UpdateMemberAsync(ctx, employeeDto, ct);
+                    var accountResult = await _accountUpdateRepository.UpdateAccountActiveAsync(ctx, accountDto, ct);
+                    var memberResult = await _memberUpdateRepository.UpdateMemberActiveAsync(ctx, memberDto, ct);
 
                     result = accountResult== UpdateResult.Updated && memberResult;
                     if (result)

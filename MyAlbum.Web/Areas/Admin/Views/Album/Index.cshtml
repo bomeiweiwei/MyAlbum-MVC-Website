@@ -1,0 +1,645 @@
+﻿
+@{
+    ViewData["Title"] = "相簿管理";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div id="app" class="p-3">
+    <el-card shadow="never">
+        <template #header>
+            <div style="display:flex; flex-direction:column; gap:16px;">
+
+                <!-- 第一行：標題 + 新增 -->
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div style="font-size:16px; font-weight:600;">
+                        相簿管理
+                    </div>
+
+                    <el-button type="primary" v-on:click="openCreate">
+                        新增
+                    </el-button>
+                </div>
+
+                <!-- 第二行：查詢表單 -->
+                <el-form :inline="true"
+                         :model="query"
+                         class="album-search-form"
+                         style="width:100%;">
+                    <el-form-item label="類別">
+                        <el-select v-model="query.albumCategoryId"
+                                   placeholder="相簿類別"
+                                   clearable
+                                   filterable
+                                   :loading="categoryLoading"
+                                   style="width:220px;">
+                            <el-option label="全部" :value="null"></el-option>
+                            <el-option v-for="c in categoryItems"
+                                       :key="c.albumCategoryId"
+                                       :label="c.categoryName"
+                                       :value="c.albumCategoryId" />
+                        </el-select>
+                    </el-form-item>
+
+                    <el-form-item label="擁有人">
+                        <el-input v-model="query.ownerName"
+                                  placeholder="搜尋相簿擁有人"
+                                  clearable
+                                  style="width:220px;" />
+                    </el-form-item>
+
+                    <el-form-item label="標題">
+                        <el-input v-model="query.title"
+                                  placeholder="搜尋標題"
+                                  clearable
+                                  style="width:220px;" />
+                    </el-form-item>
+
+                    <el-form-item label="發佈日">
+                        <el-date-picker v-model="query.releaseDateRange"
+                                        type="daterange"
+                                        range-separator="~"
+                                        start-placeholder="開始日"
+                                        end-placeholder="結束日"
+                                        format="YYYY-MM-DD"
+                                        value-format="x"
+                                        style="width:300px;" />
+                    </el-form-item>
+
+                    <el-form-item label="狀態">
+                        <el-select v-model="query.statusFilter"
+                                   placeholder="狀態"
+                                   clearable
+                                   style="width:140px;">
+                            <el-option label="全部" :value="null"></el-option>
+                            <el-option label="啟用" :value="statusValues.enabled"></el-option>
+                            <el-option label="停用" :value="statusValues.disabled"></el-option>
+                        </el-select>
+                    </el-form-item>
+
+                    <!-- 查詢 / 清除 -->
+                    <el-form-item class="search-buttons">
+                        <el-button type="primary" v-on:click="onSearch">查詢</el-button>
+                        <el-button v-on:click="resetQuery">清除</el-button>
+                    </el-form-item>
+
+                </el-form>
+
+            </div>
+        </template>
+
+        <!-- Table -->
+        <el-table :data="rows" v-loading="loading" border style="width:100%;">
+            <el-table-column prop="categoryName" label="類別" min-width="80"></el-table-column>
+            <el-table-column prop="ownerName" label="擁有人" min-width="80"></el-table-column>
+            <el-table-column prop="title" label="標題" min-width="150"></el-table-column>
+            <el-table-column prop="description" label="描述" width="150"></el-table-column>
+            <el-table-column label="發佈時間" width="250">
+                <template #default="{ row }">
+                    {{ utcToTaipeiText(row.releaseTimeUtc) }}
+                </template>
+            </el-table-column>
+
+            <el-table-column label="狀態" width="140">
+                <template #default="scope">
+                    <el-tag v-if="isEnabled(scope.row.status)" type="success">啟用</el-tag>
+                    <el-tag v-else type="info">停用</el-tag>
+                </template>
+            </el-table-column>
+
+            <el-table-column label="操作" width="300">
+                <template #default="scope">
+                    <el-button size="small" v-on:click="openEdit(scope.row)">更新</el-button>
+
+                    <el-button size="small"
+                               type="danger"
+                               :disabled="!isEnabled(scope.row.status)"
+                               v-on:click="confirmSetStatus(scope.row, statusValues.disabled)">
+                        停用
+                    </el-button>
+
+                    <el-button size="small"
+                               type="success"
+                               :disabled="isEnabled(scope.row.status)"
+                               v-on:click="confirmSetStatus(scope.row, statusValues.enabled)">
+                        啟用
+                    </el-button>
+                </template>
+            </el-table-column>
+        </el-table>
+
+        <!-- Pagination -->
+        <div style="display:flex; justify-content:flex-end; margin-top:12px;">
+            <el-pagination background
+                           layout="total, sizes, prev, pager, next, jumper"
+                           :total="pager.total"
+                           :page-size="pager.pageSize"
+                           :current-page="pager.pageIndex"
+                           :page-sizes="[10, 20, 50, 100]"
+                           v-on:current-change="onPageChange"
+                           v-on:size-change="onSizeChange">
+            </el-pagination>
+        </div>
+    </el-card>
+
+    <!-- Dialog：Create / Edit -->
+    <el-dialog v-model="dialog.visible"
+               :title="dialog.mode === 'create' ? '新增相簿' : '更新相簿'"
+               width="560px">
+
+        <el-form :model="form" label-width="90px">
+            <el-form-item v-if="form.publicCoverUrl" label="相簿封面">
+                <img :src="form.publicCoverUrl"
+                     alt="cover"
+                     style="width:120px;height:120px;object-fit:cover;border-radius:8px;border:1px solid #dcdfe6;" />
+            </el-form-item>
+            <el-form-item label="類別">
+                <el-select v-model="form.albumCategoryId"
+                           placeholder="相簿類別"
+                           clearable
+                           filterable
+                           :loading="categoryLoading"
+                           style="width:220px;">
+                    <el-option label="全部" :value="null"></el-option>
+                    <el-option v-for="c in categoryItems"
+                               :key="c.albumCategoryId"
+                               :label="c.categoryName"
+                               :value="c.albumCategoryId" />
+                </el-select>
+            </el-form-item>
+            <el-form-item label="擁有者">
+                <el-select v-model="form.ownerAccountId"
+                           placeholder="相簿擁有者"
+                           clearable
+                           filterable
+                           :loading="ownerLoading"
+                           style="width:220px;">
+                    <el-option v-for="o in ownerItems"
+                               :key="o.accountId"
+                               :label="o.displayName"
+                               :value="o.accountId" />
+                </el-select>
+            </el-form-item>
+            <el-form-item label="標題">
+                <el-input v-model="form.title" placeholder="請輸入標題"></el-input>
+            </el-form-item>
+
+            <el-form-item label="描述">
+                <el-input v-model="form.description" placeholder="請輸入描述"></el-input>
+            </el-form-item>
+
+            <el-form-item label="封面">
+                <el-upload :auto-upload="false"
+                           :show-file-list="false"
+                           accept=".jpg,.jpeg,.png"
+                           :before-upload="beforeCoverUpload"
+                           :on-change="onCoverChange">
+                    <div style="width:120px;height:120px;border:1px dashed #dcdfe6;border-radius:8px;display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:pointer;">
+                        <img v-if="coverPreviewUrl" :src="coverPreviewUrl" style="width:100%;height:100%;object-fit:cover;" />
+                        <div v-else style="text-align:center;color:#909399;font-size:12px;">
+                            <div>點擊選擇圖片</div>
+                            <div style="margin-top:4px;">jpg / jpeg / png</div>
+                        </div>
+                    </div>
+                </el-upload>
+
+                <div v-if="coverPreviewUrl" style="margin-left:12px;display:flex;flex-direction:column;gap:8px;">
+                    <el-button size="small" v-on:click="coverPreviewVisible = true">預覽</el-button>
+                    <el-button size="small" type="danger" plain v-on:click="clearCover">移除</el-button>
+                    <div v-if="coverFileName" style="font-size:12px;color:#909399;">
+                        已選：{{ coverFileName }}
+                    </div>
+                </div>
+            </el-form-item>
+
+
+            <el-form-item v-if="dialog.mode === 'edit'" label="狀態">
+                <el-select v-model="form.status" style="width:100%;">
+                    <el-option label="啟用" :value="statusValues.enabled"></el-option>
+                    <el-option label="停用" :value="statusValues.disabled"></el-option>
+                </el-select>
+            </el-form-item>
+        </el-form>
+
+        <template #footer>
+            <el-button v-on:click="dialog.visible=false">取消</el-button>
+            <el-button type="primary" :loading="dialog.saving" v-on:click="saveDialog">儲存</el-button>
+        </template>
+    </el-dialog>
+
+    <el-dialog v-model="coverPreviewVisible" title="圖片預覽" width="520px">
+        <div style="display:flex;justify-content:center;">
+            <img v-if="coverPreviewUrl" :src="coverPreviewUrl" style="max-width:100%;max-height:60vh;" />
+        </div>
+    </el-dialog>
+
+</div>
+
+<style>
+    .album-search-form {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 12px 16px;
+    }
+
+    /* 移除 el-form-item 預設下方間距 */
+    .album-search-form .el-form-item {
+        margin-bottom: 0;
+    }
+
+    /* 讓查詢按鈕群靠右 */
+    .album-search-form .search-buttons {
+        margin-left: auto;
+    }
+
+
+</style>
+
+<script>
+    const { createApp, reactive, ref, onMounted } = Vue;
+
+    createApp({
+        setup() {
+            const loading = ref(false);
+            const rows = ref([]);
+
+            // Status enum：1=啟用, 0=停用
+            const statusValues = {
+                enabled: 1,
+                disabled: 0
+            };
+
+            // 查詢條件
+            const query = reactive({
+                albumCategoryId: null,
+                ownerName: '',
+                title: '',
+                statusFilter: null, // null=全部
+                releaseDateRange: null
+            });
+
+            // 分頁
+            const pager = reactive({
+                pageIndex: 1,
+                pageSize: 10,
+                total: 0
+            });
+
+            // Dialog
+            const dialog = reactive({
+                visible: false,
+                mode: 'create', // create | edit
+                saving: false
+            });
+
+            // Form
+            const form = reactive({
+                albumId: null,
+                albumCategoryId: null,
+                ownerAccountId: null,
+                title: '',
+                description: '',
+                status: statusValues.enabled,
+                file: null,
+                publicCoverUrl: ''
+            });
+
+            const coverPreviewUrl = ref('');
+            const coverPreviewVisible = ref(false);
+            const coverFileName = ref('');
+            function revokeCoverPreview() {
+                if (coverPreviewUrl.value) {
+                    URL.revokeObjectURL(coverPreviewUrl.value);
+                    coverPreviewUrl.value = '';
+                }
+            }
+            function clearCover() {
+                form.file = null;
+                coverFileName.value = '';
+                coverPreviewVisible.value = false;
+                revokeCoverPreview();
+            }
+            function beforeCoverUpload(rawFile) {
+                const okType = rawFile && (rawFile.type === 'image/jpeg' || rawFile.type === 'image/png');
+                if (!okType) {
+                    ElementPlus.ElMessage.error('只允許上傳 jpg / jpeg / png');
+                    return false;
+                }
+
+                const maxSizeMb = 10;
+                const okSize = rawFile.size / 1024 / 1024 <= maxSizeMb;
+                if (!okSize) {
+                    ElementPlus.ElMessage.error(`圖片大小不可超過 ${maxSizeMb}MB`);
+                    return false;
+                }
+
+                return true;
+            }
+            function onCoverChange(uploadFile) {
+                const raw = uploadFile?.raw;
+                if (!raw) return;
+
+                if (!beforeCoverUpload(raw)) return;
+
+                // 存 raw File，等儲存時才跟著 FormData 一起送
+                form.file = raw;
+                coverFileName.value = raw.name;
+
+                revokeCoverPreview();
+                coverPreviewUrl.value = URL.createObjectURL(raw);
+            }
+
+            function utcToTaipeiText(utc) {
+              if (!utc) return '';
+              const d = new Date(utc);
+              if (Number.isNaN(d.getTime())) return '';
+              return d.toLocaleString('zh-TW', { timeZone: 'Asia/Taipei', hour12: false });
+            }
+
+            const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+            function buildSearchParams() {
+                const startMs = query.releaseDateRange?.[0] ?? null;
+                const endMsExclusive = query.releaseDateRange?.[1]
+                ? Number(query.releaseDateRange[1]) + ONE_DAY_MS
+                : null;
+
+                return {
+                    pageIndex: pager.pageIndex,
+                    pageSize: pager.pageSize,
+                    'Data.AlbumCategoryId': query.albumCategoryId,
+                    'Data.OwnerName': query.ownerName || null,
+                    'Data.Title': query.title || null,
+                    'Data.Status': query.statusFilter,
+                    'Data.StartLocalMs': startMs,
+                    'Data.EndLocalMs': endMsExclusive
+                };
+            }
+            // 類別=====================
+            const categoryItems = ref([]);
+            const categoryLoading = ref(false);
+
+            const apiCategories = axios.create({
+              baseURL: '/Admin/Api/AlbumCategoriesApi',
+              headers: { 'Content-Type': 'application/json' }
+            });
+
+            async function loadCategoryItems() {
+              categoryLoading.value = true;
+              try {
+                const resp = await apiCategories.get('/items');
+
+                const arr = Array.isArray(resp.data) ? resp.data : (resp.data?.data ?? []);
+                categoryItems.value = arr;
+
+              } catch (e) {
+                ElementPlus.ElMessage.error('載入相簿類別失敗');
+              } finally {
+                categoryLoading.value = false;
+              }
+            }
+            // 類別=====================
+            // 擁有人=====================
+            const ownerItems = ref([]);
+            const ownerLoading = ref(false);
+
+            const apiOwner = axios.create({
+              baseURL: '/Admin/Api/MemberAccountApi',
+              headers: { 'Content-Type': 'application/json' }
+            });
+
+            async function loadOwnerItems() {
+              ownerLoading.value = true;
+              try {
+                const resp = await apiOwner.get('/items');
+
+                const arr = Array.isArray(resp.data) ? resp.data : (resp.data?.data ?? []);
+                ownerItems.value = arr;
+
+              } catch (e) {
+                ElementPlus.ElMessage.error('載入擁有人失敗');
+              } finally {
+                ownerLoading.value = false;
+              }
+            }
+            // 擁有人=====================
+
+            const apiJson = axios.create({
+                baseURL: '/Admin/Api/AlbumApi',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const apiForm = axios.create({
+                baseURL: '/Admin/Api/AlbumApi'
+            });
+
+            function isEnabled(status) {
+                return status === statusValues.enabled;
+            }
+
+            async function loadList() {
+                loading.value = true;
+                try {
+                    const resp = await apiJson.get('', { params: buildSearchParams() });
+
+                    const payload = resp.data || {};
+                    rows.value = payload.data ?? payload.Data ?? [];
+                    pager.total = payload.count ?? payload.Count ?? 0;
+                } catch (e) {
+                    ElementPlus.ElMessage.error('載入列表失敗');
+                } finally {
+                    loading.value = false;
+                }
+            }
+
+            function onSearch() {
+                pager.pageIndex = 1;
+                loadList();
+            }
+
+            function resetQuery() {
+                query.albumCategoryId = null;
+                query.ownerName = '';
+                query.title = '';
+                query.statusFilter = null;
+                query.releaseDateRange = null;
+                pager.pageIndex = 1;
+                loadList();
+            }
+
+            function onPageChange(page) {
+                pager.pageIndex = page;
+                loadList();
+            }
+
+            function onSizeChange(size) {
+                pager.pageSize = size;
+                pager.pageIndex = 1;
+                loadList();
+            }
+
+            function openCreate() {
+                dialog.mode = 'create';
+                form.albumId = null;
+                form.albumCategoryId = null;
+                form.ownerAccountId = null;
+                form.title = '';
+                form.description = '';
+                form.status = statusValues.enabled;
+                form.file = null;
+                form.publicCoverUrl = '';
+                clearCover();
+                dialog.visible = true;
+            }
+
+            async function openEdit(row) {
+                dialog.mode = 'edit';
+                clearCover();
+                dialog.visible = true;
+                dialog.saving = false;
+                try {
+                    const resp = await apiJson.get(`/${row.albumId}`);
+                    const dto = resp.data;
+
+                    form.albumId = dto.albumId ?? dto.albumId;
+                    form.albumCategoryId = dto.albumCategoryId ?? dto.albumCategoryId;
+                    form.ownerAccountId = dto.ownerAccountId ?? dto.ownerAccountId;
+                    form.title = dto.title ?? dto.title;
+                    form.description = dto.description ?? dto.description;
+                    form.status = dto.status ?? dto.Status;
+                    form.file = null;
+                    form.publicCoverUrl = dto.publicCoverUrl || '';
+                } catch (e) {
+                    ElementPlus.ElMessage.error('讀取資料失敗');
+                    dialog.visible = false;
+                }
+            }
+
+            function toFormData(obj) {
+                const fd = new FormData();
+                Object.entries(obj).forEach(([k, v]) => {
+                    if (v === undefined || v === null) return;
+                    fd.append(k, v);
+                });
+                return fd;
+            }
+
+            async function saveDialog() {
+                if (!form.title || !form.title.trim()) {
+                    ElementPlus.ElMessage.warning('標題必填');
+                    return;
+                }
+                
+                dialog.saving = true;
+                try {
+                    if (dialog.mode === 'create') {
+                        const fd = toFormData({
+                              albumCategoryId: form.albumCategoryId,
+                              ownerAccountId: form.ownerAccountId,
+                              title: form.title,
+                              description: form.description,
+                              ...(form.file ? { file: form.file } : {})
+                        });
+
+                        if (form.file) {
+                          fd.append("Files", form.file);
+                        }
+
+                        const { data: id } = await apiForm.post('CreateAlbumWithUpload', fd);
+                        console.log(id);
+                        ElementPlus.ElMessage.success('新增成功');
+                        dialog.visible = false;
+                        loadList();
+                    } else {
+                        const fd = toFormData({
+                              albumId: form.albumId,
+                              albumCategoryId: form.albumCategoryId,
+                              ownerAccountId: form.ownerAccountId ?? '',
+                              title: form.title ?? '',
+                              description: form.description,
+                              status: form.status,
+                              ...(form.file ? { file: form.file } : {})
+                        });
+
+                        if (form.file) {
+                          fd.append("Files", form.file);
+                        }
+
+                        const { data: ok } = await apiForm.put(`/${form.albumId}`, fd);
+                        console.log(ok);
+                        ElementPlus.ElMessage.success('更新成功');
+                        dialog.visible = false;
+                        loadList();
+                    }
+                } catch (e) {
+                    console.log(e)
+                    ElementPlus.ElMessage.error('儲存失敗（請檢查欄位或後端驗證）');
+                } finally {
+                    dialog.saving = false;
+                }
+            }
+
+            async function confirmSetStatus(row, newStatus) {
+                const actionText = (newStatus === statusValues.disabled) ? '停用' : '啟用';
+
+                try {
+                    await ElementPlus.ElMessageBox.confirm(
+                        `確定要${actionText}「${row.title}」？`,
+                        `${actionText}確認`,
+                        { type: 'warning' }
+                    );
+
+                    const resp = await apiJson.patch(`/${row.albumId}/status`, {
+                        status: newStatus
+                    });
+
+                    const ok = resp.data === true || resp.data === "true";
+                    if (ok) {
+                        row.status = newStatus;
+                        ElementPlus.ElMessage.success(`${actionText}成功`);
+                    } else {
+                        ElementPlus.ElMessage.error(`${actionText}失敗`);
+                    }
+                } catch {
+                    // cancel / ignore
+                }
+            }
+
+            onMounted(async () => {
+              await loadCategoryItems();
+              await loadOwnerItems();
+              await loadList();
+            });
+
+            return {
+                loading,
+                rows,
+                query,
+                pager,
+                dialog,
+                form,
+                statusValues,
+                isEnabled,
+                loadList,
+                onSearch,
+                resetQuery,
+                onPageChange,
+                onSizeChange,
+                openCreate,
+                openEdit,
+                saveDialog,
+                confirmSetStatus,
+                coverPreviewUrl,
+                coverPreviewVisible,
+                coverFileName,
+                beforeCoverUpload,
+                onCoverChange,
+                clearCover,
+                utcToTaipeiText,
+                categoryItems,
+                categoryLoading,
+                ownerItems,
+                ownerLoading
+            };
+        }
+    }).use(ElementPlus).mount('#app');
+</script>
+

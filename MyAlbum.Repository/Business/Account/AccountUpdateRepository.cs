@@ -29,7 +29,7 @@ namespace MyAlbum.Repository.Business.Account
 
             data.Status = (byte)accountDto.Status;
             data.UpdatedBy = accountDto.UpdateBy;
-            data.UpdatedAtUtc = DateTime.UtcNow;
+            data.UpdatedAtUtc = accountDto.UpdatedAtUtc;
             int check = await ctx.SaveChangesAsync(ct);
             if (check == 1)
                 return UpdateResult.Updated;
@@ -44,8 +44,9 @@ namespace MyAlbum.Repository.Business.Account
                 return UpdateResult.NotFound;
 
             data.Status = (byte)accountDto.Status;
+            data.UpdatedAtUtc = accountDto.UpdatedAtUtc;
             data.UpdatedBy = accountDto.UpdateBy;
-            data.UpdatedAtUtc = DateTime.UtcNow;
+            
             int check = await ctx.SaveChangesAsync(ct);
             if (check == 1)
                 return UpdateResult.Updated;

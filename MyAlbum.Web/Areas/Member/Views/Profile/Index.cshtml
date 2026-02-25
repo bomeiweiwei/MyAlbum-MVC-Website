@@ -1,0 +1,73 @@
+﻿@model MyAlbum.Models.MemberAccount.MemberAccountDto
+
+@{
+    ViewData["Title"] = "會員資料";
+    Layout = "~/Views/Shared/_MemberLayout.cshtml";
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+
+            <div class="card shadow">
+                <div class="card-body text-center">
+                    <div class="mb-4">
+                        @if (!string.IsNullOrEmpty(Model.PublicAvatarUrl))
+                        {
+                            <img src="@Model.PublicAvatarUrl"
+                                 alt="Avatar"
+                                 class="rounded-circle border"
+                                 style="width:150px;height:150px;object-fit:cover;" />
+                        }
+                        else
+                        {
+                            <img src="~/Images/default-avatar.png"
+                                 alt="Default Avatar"
+                                 class="rounded-circle border"
+                                 style="width:150px;height:150px;object-fit:cover;" />
+                        }
+                    </div>
+
+                    <div class="mb-2 text-start">
+                        <label class="fw-bold">MemberId</label>
+                        <div class="form-control-plaintext">
+                            @Model.MemberId
+                        </div>
+                    </div>
+
+                    <div class="mb-2 text-start">
+                        <label class="fw-bold">帳號</label>
+                        <div class="form-control-plaintext">
+                            @Model.UserName
+                        </div>
+                    </div>
+
+                    <div class="mb-2 text-start">
+                        <label class="fw-bold">顯示名稱</label>
+                        <div class="form-control-plaintext">
+                            @Model.DisplayName
+                        </div>
+                    </div>
+
+                    <div class="mb-2 text-start">
+                        <label class="fw-bold">Email</label>
+                        <div class="form-control-plaintext">
+                            @Model.Email
+                        </div>
+                    </div>
+                    <div class="d-grid mt-4">
+                        <a class="btn btn-outline-primary"
+                           asp-area="Member"
+                           asp-controller="Profile"
+                           asp-action="Edit"
+                           asp-route-memberId="@Model.MemberId">
+                            編輯
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+

@@ -22,5 +22,7 @@ namespace MyAlbum.Models.Album
         public Guid UpdatedBy { get; set; }
         public DateTime UpdatedAtUtc { get; set; } = DateTime.UtcNow;
         #endregion
+
+        public bool UpdateByMember { get; set; } = true;
     }
 }

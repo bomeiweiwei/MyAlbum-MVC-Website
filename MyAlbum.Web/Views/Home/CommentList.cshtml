@@ -1,0 +1,88 @@
+﻿@using System.Security.Claims
+@using MyAlbum.Shared.Extensions
+@model MyAlbum.Web.Models.AlbumComment.AlbumPhotoCommentsViewModel
+
+@{
+    ViewData["Title"] = "瀏覽評論";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h4>瀏覽評論</h4>
+<hr />
+<div class="row">
+    <div class="col-12 col-md-6">
+        <div class="card">
+            <img class="card-img-top" src="@Model.Photo.PublicPathUrl" />
+        </div>
+    </div>
+
+    <div class="col-12 col-md-6">
+        <div style="overflow:auto;height:700px;">
+            @foreach (var item in Model.Comments)
+            {
+                <div class="card mb-2">
+                    <div class="card-body">
+                        <h5 class="text-primary">@item.DisplayName</h5>
+                        <p>@item.Comment</p>
+                        <p>@item.ReleaseTimeUtc.ToLocalTime()</p>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+    <div class="col-12">
+        @if (User.Identity?.IsAuthenticated == true)
+        {
+            var loginAccountId = User.GetAccountId();
+
+            if (loginAccountId.HasValue && Model.Photo.OwnerAccountId != loginAccountId.Value)
+            {
+                <button type="button"
+                        class="btn btn-primary col-2"
+                        data-bs-toggle="modal"
+                        data-bs-target="#staticBackdrop">
+                    我要評論
+                </button>
+            }
+        }
+        @* @if (User.Identity != null && User.Identity.IsAuthenticated)
+        {
+            var loginAccountIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (Guid.TryParse(loginAccountIdStr, out var loginAccountId))
+            {
+                if (Model.Photo.OwnerAccountId != loginAccountId)
+                {
+                    <button type="button" class="btn btn-primary col-2" data-bs-toggle="modal" data-bs-target="#staticBackdrop">
+                        我要評論
+                    </button>
+                }
+            }
+        } *@
+    </div>
+</div>
+
+<div class="modal fade" id="staticBackdrop" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="staticBackdropLabel">我要評論</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="myform"
+                      asp-controller="Home"
+                      asp-action="AddComment"
+                      asp-route-albumPhotoId="@Model.Photo.AlbumPhotoId"
+                      method="post"
+                      class="d-inline">
+                    @Html.AntiForgeryToken()
+                    <textarea id="Comment" name="Comment" rows="4" cols="50"></textarea>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <input type="submit" class="btn btn-primary" form="myform" value="送出" />
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">返回</button>
+            </div>
+        </div>
+    </div>
+</div>

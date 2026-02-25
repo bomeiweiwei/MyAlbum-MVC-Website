@@ -28,5 +28,9 @@ namespace MyAlbum.Models.AlbumComment
         public Guid CreatedBy { get; set; }
 
         public Guid UpdatedBy { get; set; }
+
+        public string DisplayName { get; set; }
+
+        public Guid OwnerAccountId { get; set; }
     }
 }

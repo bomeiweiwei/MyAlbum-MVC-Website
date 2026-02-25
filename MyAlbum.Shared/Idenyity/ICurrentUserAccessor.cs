@@ -9,6 +9,7 @@ namespace MyAlbum.Shared.Idenyity
         Guid? AccountId { get; }
         string? UserName { get; }
         string? AccountType { get; }
+        string? GetClaim(string claimType);
     }
 
 }

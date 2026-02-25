@@ -1,0 +1,92 @@
+﻿@model MyAlbum.Web.Models.MemberAccount.EditMemberViewModel
+
+@{
+    ViewData["Title"] = "編輯會員資料";
+    Layout = "~/Views/Shared/_MemberLayout.cshtml";
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+
+            <div class="card shadow">
+                <div class="card-body">
+                    <h4 class="mb-4">編輯會員資料</h4>
+
+                    <form asp-area="Member"
+                          asp-controller="Profile"
+                          asp-action="Edit"
+                          method="post"
+                          enctype="multipart/form-data">
+
+                        @Html.AntiForgeryToken()
+
+                        <input asp-for="MemberId" type="hidden" />
+                        <input asp-for="AccountId" type="hidden" />
+                        <input asp-for="PublicAvatarUrl" type="hidden" />
+                        <div class="mb-3">
+                            @if (!string.IsNullOrEmpty(Model.PublicAvatarUrl))
+                            {
+                                <img src="@Model.PublicAvatarUrl"
+                                     alt="Avatar"
+                                     class="rounded-circle border"
+                                     style="width:150px;height:150px;object-fit:cover;" />
+                            }
+                            else
+                            {
+                                <img src="~/Images/default-avatar.png"
+                                     alt="Default Avatar"
+                                     class="rounded-circle border"
+                                     style="width:150px;height:150px;object-fit:cover;" />
+                            }
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Email" class="form-label">Email</label>
+                            <input asp-for="Email" class="form-control" />
+                            <span asp-validation-for="Email" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="DisplayName" class="form-label">顯示名稱</label>
+                            <input asp-for="DisplayName" class="form-control" />
+                            <span asp-validation-for="DisplayName" class="text-danger"></span>
+                        </div>
+
+                        <hr class="my-4" />
+
+                        <div class="mb-3">
+                            <label asp-for="Password" class="form-label">新密碼（可不填）</label>
+                            <input asp-for="Password" class="form-control" type="password" autocomplete="new-password" />
+                            <span asp-validation-for="Password" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="ConfirmPassword" class="form-label">確認新密碼</label>
+                            <input asp-for="ConfirmPassword" class="form-control" type="password" autocomplete="new-password" />
+                            <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Avatar" class="form-label">上傳頭像</label>
+                            <input class="form-control" type="file" name="File" />
+                            <span asp-validation-for="Avatar" class="text-danger"></span>
+                        </div>
+
+                        <div class="d-flex gap-2 mt-4">
+                            <button type="submit" class="btn btn-primary">儲存</button>
+
+                            <a class="btn btn-outline-secondary"
+                               asp-area="Member"
+                               asp-controller="Profile"
+                               asp-action="Index">
+                                取消
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>

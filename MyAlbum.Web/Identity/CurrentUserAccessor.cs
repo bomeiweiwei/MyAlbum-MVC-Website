@@ -36,5 +36,7 @@ namespace MyAlbum.Web.Identity
                 .User?
                 .FindFirst("AccountType")?
                 .Value;
+
+        public string? GetClaim(string claimType) => _httpContextAccessor.HttpContext?.User?.FindFirstValue(claimType);
     }
 }

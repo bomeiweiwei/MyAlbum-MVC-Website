@@ -20,5 +20,9 @@ namespace MyAlbum.Models.AlbumPhoto
 
         // Status 在系統裡是 Enum
         public Status? Status { get; set; }
+
+        public Guid? OwnerAccountId { get; set; }
+
+        public Guid? AlbumCategoryId { get; set; }
     }
 }

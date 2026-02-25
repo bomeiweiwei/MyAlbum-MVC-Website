@@ -1,8 +1,175 @@
-﻿@{
+﻿@model MyAlbum.Web.Models.TopImgComment.TopPhotoCommentViewModel
+
+@{
     ViewData["Title"] = "Home Page";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<style>
+    .carousel-inner img {
+        width: 100%;
+        height: 100%;
+    }
+
+    /* 熱門評論：水平橫幅 */
+    .hot-strip-wrap {
+        position: relative;
+    }
+
+    .hot-strip {
+        display: flex;
+        flex-wrap: nowrap;
+        gap: 16px;
+        overflow-x: auto;
+        padding: 8px 44px; /* 預留左右按鈕空間 */
+        scroll-behavior: smooth;
+        -webkit-overflow-scrolling: touch;
+        scroll-snap-type: x mandatory;
+    }
+
+    .hot-item {
+        flex: 0 0 auto;
+        width: 320px; /* 你可調整：280~360都行 */
+        scroll-snap-align: start;
+    }
+
+        .hot-item .card {
+            width: 100%;
+        }
+
+    /* 左右按鈕 */
+    .hot-nav-btn {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 5;
+        width: 36px;
+        height: 36px;
+        border-radius: 999px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        opacity: .9;
+    }
+
+    .hot-nav-prev {
+        left: 0;
+    }
+
+    .hot-nav-next {
+        right: 0;
+    }
+
+    /* 可選：隱藏 scrollbar（不影響功能） */
+    .hot-strip::-webkit-scrollbar {
+        height: 8px;
+    }
+</style>
+
+<div id="carouselExampleIndicators" class="carousel slide" data-bs-ride="carousel">
+    <div class="carousel-indicators">
+        <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="0" class="active" aria-current="true" aria-label="Slide 1"></button>
+        <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="1" aria-label="Slide 2"></button>
+        <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="2" aria-label="Slide 3"></button>
+    </div>
+    <div class="carousel-inner">
+        <div class="carousel-item active">
+            <img src="~/Images/img01.jpg" width="1100" height="500">
+        </div>
+        <div class="carousel-item">
+            <img src="~/Images/img02.jpg" width="1100" height="500">
+        </div>
+        <div class="carousel-item">
+            <img src="~/Images/img03.jpg" width="1100" height="500">
+        </div>
+    </div>
+    <button class="carousel-control-prev" type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide="prev">
+        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+        <span class="visually-hidden">Previous</span>
+    </button>
+    <button class="carousel-control-next" type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide="next">
+        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+        <span class="visually-hidden">Next</span>
+    </button>
 </div>
+
+<h3 class="text-center mt-5">熱門評論</h3>
+<hr />
+
+<div class="hot-strip-wrap">
+    <button type="button" class="btn btn-light shadow hot-nav-btn hot-nav-prev" id="hotPrev" aria-label="上一個">
+        ‹
+    </button>
+
+    <div class="hot-strip" id="hotCommentScroller">
+        @foreach (var item in Model.Photos)
+        {
+            <div class="hot-item">
+                <div class="card">
+                    <img class="card-img-top preview-img"
+                         src="@item.PublicPathUrl"
+                         data-full="@item.PublicPathUrl"
+                         style="height:240px; object-fit:cover; cursor:pointer;">
+
+                    <div class="card-body d-flex flex-column">
+                        <p class="card-text text-secondary mb-1">評論數量：@item.CommentNum</p>
+                        <p class="card-text text-secondary mb-1">發佈時間：@item.CreatedAtUtc.ToLocalTime()</p>
+                        <a asp-action="CommentList" asp-route-albumPhotoId="@item.AlbumPhotoId"
+                           class="btn btn-secondary">觀看評論</a>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <button type="button" class="btn btn-light shadow hot-nav-btn hot-nav-next" id="hotNext" aria-label="下一個">
+        ›
+    </button>
+</div>
+
+<div class="modal fade" id="imageModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content bg-transparent border-0">
+            <img id="modalImage" class="w-100 rounded">
+        </div>
+    </div>
+</div>
+
+<script>
+    // AlbumPhoto圖片預覽 Modal===
+    document.querySelectorAll('.preview-img').forEach(img => {
+        img.addEventListener('click', function () {
+            const fullImageUrl = this.dataset.full;
+            document.getElementById('modalImage').src = fullImageUrl;
+
+            const modal = new bootstrap.Modal(document.getElementById('imageModal'));
+            modal.show();
+        });
+    });
+    // AlbumPhoto圖片預覽 Modal===
+
+    // 熱門評論：左右按鈕滑動===
+    (function () {
+        const scroller = document.getElementById('hotCommentScroller');
+        const btnPrev = document.getElementById('hotPrev');
+        const btnNext = document.getElementById('hotNext');
+
+        if (!scroller || !btnPrev || !btnNext) return;
+
+        function getStep() {
+            const first = scroller.querySelector('.hot-item');
+            if (!first) return 320;
+            const style = window.getComputedStyle(scroller);
+            const gap = parseInt(style.columnGap || style.gap || "16", 10) || 16;
+            return first.offsetWidth + gap;
+        }
+
+        btnPrev.addEventListener('click', () => {
+            scroller.scrollBy({ left: -getStep() * 2, behavior: 'smooth' });
+        });
+
+        btnNext.addEventListener('click', () => {
+            scroller.scrollBy({ left: getStep() * 2, behavior: 'smooth' });
+        });
+    })();
+    // 熱門評論：左右按鈕滑動===
+</script>

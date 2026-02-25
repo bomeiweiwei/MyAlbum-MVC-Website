@@ -37,13 +37,17 @@ namespace MyAlbum.Repository.Business.Category
             {
                 query = query.Where(x => x.CategoryName == req.CategoryName);
             }
+            if (req.Status.HasValue)
+            {
+                query = query.Where(m => m.Status == Status.Active);
+            }
 
             result = await query.FirstOrDefaultAsync(ct);
 
             return result;
         }
 
-        public async Task<ResponseBase<List<AlbumCategoryDto>>> GetAlbumCategoryListAsync(PageRequestBase<GetAlbumCategoryReq> req, CancellationToken ct = default)
+        public async Task<ResponseBase<List<AlbumCategoryDto>>> GetAlbumCategoryListAsync(PageRequestBase<GetAlbumCategoryListReq> req, CancellationToken ct = default)
         {
             var result = new ResponseBase<List<AlbumCategoryDto>>();
             using var ctx = _factory.Create(ConnectionMode.Slave);
@@ -68,7 +72,7 @@ namespace MyAlbum.Repository.Business.Category
                 query = query.Where(m => m.Status == req.Data.Status);
             }
 
-            result.Count = await query.CountAsync();
+            result.Count = await query.CountAsync(ct);
             result.Data = await query.Skip((req.pageIndex - 1) * req.pageSize).Take(req.pageSize).AsNoTracking().ToListAsync(ct);
 
             return result;

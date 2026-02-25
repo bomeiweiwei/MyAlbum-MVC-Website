@@ -3,6 +3,7 @@ using MyAlbum.Domain;
 using MyAlbum.Domain.Album;
 using MyAlbum.Infrastructure.EF.Data;
 using MyAlbum.Models.Album;
+using MyAlbum.Models.Base;
 using MyAlbum.Models.Category;
 using MyAlbum.Shared.Enums;
 using System;
@@ -22,6 +23,8 @@ namespace MyAlbum.Repository.Business.Album
             var db = ctx.AsDbContext<MyAlbumContext>();
 
             var query = from main in db.Albums.AsNoTracking()
+                        where
+                            main.AlbumId == req.AlbumId
                         select new AlbumDto()
                         {
                             AlbumId = main.AlbumId,
@@ -29,7 +32,7 @@ namespace MyAlbum.Repository.Business.Album
                             OwnerAccountId = main.OwnerAccountId,
                             Title = main.Title,
                             Description = main.Description,
-                            CoverPath = main.CoverPath,
+                            PublicCoverUrl = main.CoverPath ?? string.Empty,
                             ReleaseTimeUtc = main.ReleaseTimeUtc,
                             TotalCommentNum = main.TotalCommentNum,
                             Status = (Status)main.Status,
@@ -38,10 +41,6 @@ namespace MyAlbum.Repository.Business.Album
                             UpdatedAtUtc = main.UpdatedAtUtc,
                             UpdatedBy = main.UpdatedBy,
                         };
-            if (req.AlbumId.HasValue)
-            {
-                query = query.Where(x => x.AlbumId == req.AlbumId);
-            }
             if (req.AlbumCategoryId.HasValue)
             {
                 query = query.Where(x => x.AlbumCategoryId == req.AlbumCategoryId);
@@ -49,22 +48,6 @@ namespace MyAlbum.Repository.Business.Album
             if (req.OwnerAccountId.HasValue)
             {
                 query = query.Where(x => x.OwnerAccountId == req.OwnerAccountId);
-            }
-            if (!string.IsNullOrWhiteSpace(req.Title))
-            {
-                query = query.Where(m => m.Title.Contains(req.Title));
-            }
-            if (req.ReleaseTimeUtc.HasValue)
-            {
-                query = query.Where(m => m.ReleaseTimeUtc == req.ReleaseTimeUtc);
-            }
-            if (req.StartReleaseTimeUtc.HasValue)
-            {
-                query = query.Where(m => m.ReleaseTimeUtc >= req.StartReleaseTimeUtc);
-            }
-            if (req.EndReleaseTimeUtc.HasValue)
-            {
-                query = query.Where(m => m.ReleaseTimeUtc <= req.EndReleaseTimeUtc);
             }
             if (req.Status.HasValue)
             {
@@ -73,16 +56,26 @@ namespace MyAlbum.Repository.Business.Album
 
             result = await query.FirstOrDefaultAsync(ct);
 
+            if (result != null)
+            {
+                result.ReleaseTimeUtc = DateTime.SpecifyKind(result.ReleaseTimeUtc, DateTimeKind.Utc);
+                result.CreatedAtUtc = DateTime.SpecifyKind(result.CreatedAtUtc, DateTimeKind.Utc);
+                result.UpdatedAtUtc = DateTime.SpecifyKind(result.UpdatedAtUtc, DateTimeKind.Utc);
+            }
+
             return result;
         }
 
-        public async Task<List<AlbumDto>> GetAlbumListAsync(GetAlbumReq req, CancellationToken ct = default)
+        public async Task<ResponseBase<List<AlbumDto>>> GetAlbumListAsync(PageRequestBase<GetAlbumListReq> req, CancellationToken ct = default)
         {
-            var result = new List<AlbumDto>();
+            var result = new ResponseBase<List<AlbumDto>>();
             using var ctx = _factory.Create(ConnectionMode.Slave);
             var db = ctx.AsDbContext<MyAlbumContext>();
 
             var query = from main in db.Albums.AsNoTracking()
+                        join category in db.AlbumCategories.AsNoTracking() on main.AlbumCategoryId equals category.AlbumCategoryId
+                        join account in db.Accounts.AsNoTracking() on main.OwnerAccountId equals account.AccountId
+                        join member in db.Members.AsNoTracking() on account.AccountId equals member.AccountId
                         select new AlbumDto()
                         {
                             AlbumId = main.AlbumId,
@@ -90,7 +83,7 @@ namespace MyAlbum.Repository.Business.Album
                             OwnerAccountId = main.OwnerAccountId,
                             Title = main.Title,
                             Description = main.Description,
-                            CoverPath = main.CoverPath,
+                            PublicCoverUrl = main.CoverPath ?? string.Empty,
                             ReleaseTimeUtc = main.ReleaseTimeUtc,
                             TotalCommentNum = main.TotalCommentNum,
                             Status = (Status)main.Status,
@@ -98,37 +91,48 @@ namespace MyAlbum.Repository.Business.Album
                             CreatedBy = main.CreatedBy,
                             UpdatedAtUtc = main.UpdatedAtUtc,
                             UpdatedBy = main.UpdatedBy,
+                            OwnerName = member.DisplayName,
+                            CategoryName = category.CategoryName
                         };
-            if (req.AlbumId.HasValue)
+            if (req.Data.AlbumCategoryId.HasValue)
             {
-                query = query.Where(x => x.AlbumId == req.AlbumId);
+                query = query.Where(x => x.AlbumCategoryId == req.Data.AlbumCategoryId);
             }
-            if (req.AlbumCategoryId.HasValue)
+            if (req.Data.OwnerAccountId.HasValue)
             {
-                query = query.Where(x => x.AlbumCategoryId == req.AlbumCategoryId);
+                query = query.Where(x => x.OwnerAccountId == req.Data.OwnerAccountId);
             }
-            if (req.OwnerAccountId.HasValue)
+            if (!string.IsNullOrWhiteSpace(req.Data.Title))
             {
-                query = query.Where(x => x.OwnerAccountId == req.OwnerAccountId);
+                query = query.Where(m => m.Title.Contains(req.Data.Title));
             }
-            if (!string.IsNullOrWhiteSpace(req.Title))
+            if (req.Data.StartReleaseTimeUtc.HasValue)
             {
-                query = query.Where(m => m.Title.Contains(req.Title));
-            }
-            if (req.StartReleaseTimeUtc.HasValue)
-            {
-                query = query.Where(m => m.ReleaseTimeUtc >= req.StartReleaseTimeUtc);
-            }
-            if (req.EndReleaseTimeUtc.HasValue)
-            {
-                query = query.Where(m => m.ReleaseTimeUtc <= req.EndReleaseTimeUtc);
-            }
-            if (req.Status.HasValue)
-            {
-                query = query.Where(m => m.Status == req.Status);
+                query = query.Where(m => m.ReleaseTimeUtc >= req.Data.StartReleaseTimeUtc.Value);
             }
 
-            result = await query.ToListAsync(ct);
+            if (req.Data.EndReleaseTimeUtc.HasValue)
+            {
+                query = query.Where(m => m.ReleaseTimeUtc < req.Data.EndReleaseTimeUtc.Value);
+            }
+            if (req.Data.Status.HasValue)
+            {
+                query = query.Where(m => m.Status == req.Data.Status);
+            }
+            if (!string.IsNullOrWhiteSpace(req.Data.OwnerName))
+            {
+                query = query.Where(m => m.OwnerName.Contains(req.Data.OwnerName));
+            }
+
+            result.Count = await query.CountAsync(ct);
+            result.Data = await query.Skip((req.pageIndex - 1) * req.pageSize).Take(req.pageSize).AsNoTracking().ToListAsync(ct);
+
+            foreach (var item in result.Data)
+            {
+                item.ReleaseTimeUtc = DateTime.SpecifyKind(item.ReleaseTimeUtc, DateTimeKind.Utc);
+                item.CreatedAtUtc = DateTime.SpecifyKind(item.CreatedAtUtc, DateTimeKind.Utc);
+                item.UpdatedAtUtc = DateTime.SpecifyKind(item.UpdatedAtUtc, DateTimeKind.Utc);
+            }
 
             return result;
         }

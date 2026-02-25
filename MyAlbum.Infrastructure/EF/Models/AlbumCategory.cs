@@ -22,8 +22,4 @@ public partial class AlbumCategory
     public Guid UpdatedBy { get; set; }
 
     public virtual ICollection<Album> Albums { get; set; } = new List<Album>();
-
-    public virtual Account CreatedByNavigation { get; set; } = null!;
-
-    public virtual Account UpdatedByNavigation { get; set; } = null!;
 }
