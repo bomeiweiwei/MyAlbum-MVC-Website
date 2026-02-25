@@ -81,7 +81,7 @@ namespace MyAlbum.Application.MemberAccount.implement
                     var accountResult = await _accountUpdateRepository.UpdateAccountAsync(ctx, accountDto, ct);
                     var memberResult = await _memberUpdateRepository.UpdateMemberAsync(ctx, employeeDto, ct);
 
-                    result = accountResult && memberResult;
+                    result = accountResult== UpdateResult.Updated && memberResult;
                     if (result)
                         await tx.CommitAsync(ct);
                     else
@@ -128,7 +128,7 @@ namespace MyAlbum.Application.MemberAccount.implement
                     var accountResult = await _accountUpdateRepository.UpdateAccountAsync(ctx, accountDto, ct);
                     var memberResult = await _memberUpdateRepository.UpdateMemberAsync(ctx, employeeDto, ct);
 
-                    result = accountResult && memberResult;
+                    result = accountResult== UpdateResult.Updated && memberResult;
                     if (result)
                         await tx.CommitAsync(ct);
                     else

@@ -39,9 +39,9 @@ namespace MyAlbum.Application.EmployeeAccount.implement
             _employeeUpdateRepository = employeeUpdateRepository;
         }
 
-        public async Task<bool> UpdateEmployeeAccountAsync(UpdateEmployeeAccountReq req, CancellationToken ct = default)
+        public async Task<UpdateResult> UpdateEmployeeAccountAsync(UpdateEmployeeAccountReq req, CancellationToken ct = default)
         {
-            var result = false;
+            var result = UpdateResult.NoChange;
             var operatorId = _currentUser.GetRequiredAccountId();
             var passwordHash = "";
             if (!string.IsNullOrWhiteSpace(req.Password))
@@ -78,10 +78,15 @@ namespace MyAlbum.Application.EmployeeAccount.implement
                 {
                     var accountResult = await _accountUpdateRepository.UpdateAccountAsync(ctx, accountDto, ct);
                     var employeeResult = await _employeeUpdateRepository.UpdateEmployeeAsync(ctx, employeeDto, ct);
-
-                    result = accountResult && employeeResult;
-                    if (result)
+                    if (accountResult == UpdateResult.NotFound || employeeResult == UpdateResult.NotFound)
+                    {
+                        result = UpdateResult.NotFound;
+                    }
+                    else if (accountResult == UpdateResult.Updated && employeeResult == UpdateResult.Updated)
+                    {
                         await tx.CommitAsync(ct);
+                        result = UpdateResult.Updated;
+                    }
                     else
                         await tx.RollbackAsync(ct);
                 }
@@ -95,9 +100,9 @@ namespace MyAlbum.Application.EmployeeAccount.implement
             return result;
         }
 
-        public async Task<bool> UpdateEmployeeAccountActiveAsync(UpdateEmployeeAccountActiveReq req, CancellationToken ct = default)
+        public async Task<UpdateResult> UpdateEmployeeAccountActiveAsync(UpdateEmployeeAccountActiveReq req, CancellationToken ct = default)
         {
-            var result = false;
+            var result = UpdateResult.NoChange;
             var operatorId = _currentUser.GetRequiredAccountId();
             AccountUpdateDto accountDto = new AccountUpdateDto
             {
@@ -125,10 +130,15 @@ namespace MyAlbum.Application.EmployeeAccount.implement
                 {
                     var accountResult = await _accountUpdateRepository.UpdateAccountActiveAsync(ctx, accountDto, ct);
                     var employeeResult = await _employeeUpdateRepository.UpdateEmployeeActiveAsync(ctx, employeeDto, ct);
-
-                    result = accountResult && employeeResult;
-                    if (result)
+                    if (accountResult == UpdateResult.NotFound || employeeResult == UpdateResult.NotFound)
+                    {
+                        result = UpdateResult.NotFound;
+                    }
+                    else if (accountResult == UpdateResult.Updated && employeeResult == UpdateResult.Updated)
+                    {
                         await tx.CommitAsync(ct);
+                        result = UpdateResult.Updated;
+                    }
                     else
                         await tx.RollbackAsync(ct);
                 }
