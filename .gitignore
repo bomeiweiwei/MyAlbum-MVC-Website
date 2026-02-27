@@ -46,6 +46,9 @@
 **/publish/
 **/wwwroot/lib/
 
+# frontend build output
+wwwroot/vendor/
+
 ########################################
 # ========== Frontend / JavaScript ==========
 ########################################
