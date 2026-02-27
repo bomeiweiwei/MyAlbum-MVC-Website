@@ -31,7 +31,7 @@ namespace MyAlbum.Application.EmployeeAccount.implement
             _employeeAccountCreateRepository = employeeAccountCreateRepository;
         }
 
-        public async Task<Guid> CreateEmployeeWithAccount(CreateEmployeeReq req, CancellationToken ct = default)
+        public async Task<CreateEmployeeWithAccountResp> CreateEmployeeWithAccount(CreateEmployeeReq req, CancellationToken ct = default)
         {
             var operatorId = _currentUser.GetRequiredAccountId();
             var passwordHash = _hasher.HashPassword(null!, req.Password);

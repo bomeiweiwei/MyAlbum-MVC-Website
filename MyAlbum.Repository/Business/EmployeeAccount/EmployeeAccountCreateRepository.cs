@@ -5,6 +5,7 @@ using MyAlbum.Infrastructure.EF.Data;
 using MyAlbum.Infrastructure.EF.Models;
 using MyAlbum.Models.Account;
 using MyAlbum.Models.Employee;
+using MyAlbum.Models.EmployeeAccount;
 using MyAlbum.Shared.Enums;
 using System;
 using System.Collections.Generic;
@@ -17,9 +18,9 @@ namespace MyAlbum.Repository.Business.EmployeeAccount
         private readonly IAlbumDbContextFactory _factory;
         public EmployeeAccountCreateRepository(IAlbumDbContextFactory factory) => _factory = factory;
 
-        public async Task<Guid> CreateEmployeeWithAccountAsync(AccountCreateDto accountDto, EmployeeCreateDto employeeDto, CancellationToken ct = default)
+        public async Task<CreateEmployeeWithAccountResp> CreateEmployeeWithAccountAsync(AccountCreateDto accountDto, EmployeeCreateDto employeeDto, CancellationToken ct = default)
         {
-            Guid result = Guid.Empty;
+            CreateEmployeeWithAccountResp result = new CreateEmployeeWithAccountResp();
 
             using var ctx = _factory.Create(ConnectionMode.Master);
             var db = ctx.AsDbContext<MyAlbumContext>();
@@ -73,7 +74,8 @@ namespace MyAlbum.Repository.Business.EmployeeAccount
 
                     await tx.CommitAsync(ct);
 
-                    result = employee.EmployeeId;
+                    result.AccountId = account.AccountId;
+                    result.EmployeeId = employee.EmployeeId;
                 }
                 catch
                 {
