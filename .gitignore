@@ -37,6 +37,7 @@
 # Environment settings (DO NOT COMMIT)
 **/appsettings.Development.json
 **/appsettings.Staging.json
+**/appsettings.UAT.json
 **/appsettings.Production.json
 
 # User Secrets
