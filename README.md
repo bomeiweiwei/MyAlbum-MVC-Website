@@ -162,7 +162,7 @@ MyAlbum.Infrastructure/sql/
 ### Build Image
 
 ```bash
-docker build -t myalbum-web:dev .
+docker build -f .\MyAlbum.Web\Dockerfile -t myalbum-web:dev .
 ```
 
 ### Run Container
@@ -170,7 +170,7 @@ docker build -t myalbum-web:dev .
 ```bash
 docker run --rm -it ^
   -p 8080:8080 ^
-  -e ASPNETCORE_ENVIRONMENT=Production ^
+  -e ASPNETCORE_ENVIRONMENT=Development ^
   -e Upload__RootPath=/data/album ^
   -e ConnectionStrings__MasterConnection="XXXXXX" ^
   -e ConnectionStrings__SlaveConnection="XXXXXX" ^
