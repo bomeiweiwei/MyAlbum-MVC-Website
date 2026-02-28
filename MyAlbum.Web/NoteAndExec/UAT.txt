@@ -1,0 +1,15 @@
+﻿在sln位置
+docker build -f .\MyAlbum.Web\Dockerfile -t myalbum-web:2.0.3 .
+
+docker rm -f myalbum-web-uat 2>nul
+
+docker run -d ^
+  --name myalbum-web-uat ^
+  --restart unless-stopped ^
+  -p 8081:8080 ^
+  -e ASPNETCORE_ENVIRONMENT=UAT ^
+  -e Upload__RootPath=/data/album ^
+  -e ConnectionStrings__MasterConnection="XXXXX" ^
+  -e ConnectionStrings__SlaveConnection="XXXXX" ^
+  -v C:\Album_UAT:/data/album ^
+  myalbum-web:2.0.3
