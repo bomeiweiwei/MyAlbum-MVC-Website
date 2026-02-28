@@ -1,0 +1,11 @@
+﻿在sln位置
+docker build -f .\MyAlbum.Web\Dockerfile -t myalbum-web:dev .
+
+docker run --rm -it ^
+  -p 8080:8080 ^
+  -e ASPNETCORE_ENVIRONMENT=Development ^
+  -e Upload__RootPath=/data/album ^
+  -e ConnectionStrings__MasterConnection="XXX" ^
+  -e ConnectionStrings__SlaveConnection="XXX" ^
+  -v C:\Album:/data/album ^
+  myalbum-web:dev
